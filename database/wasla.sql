@@ -533,28 +533,9 @@ SELECT id_utilisateur, 'travail', 'Bureau', 23, 'Lafayette' FROM utilisateur WHE
 INSERT IGNORE INTO preference_alerte (id_utilisateur, gravite_min, canal_site, canal_email, canal_sms, frequence)
 SELECT id_utilisateur, 'moderee', 1, 1, 0, 'immediate' FROM utilisateur WHERE email = 'citoyen@wasla.tn';
 
--- Module 2
-INSERT IGNORE INTO facture (id_utilisateur, type_ressource, reference, periode_debut, periode_fin, quantite, montant, date_echeance, statut)
-SELECT id_utilisateur, 'electricite', 'STEG-2026-0715', '2026-07-01', '2026-08-31', 620.00, 142.350, '2026-09-20', 'payee' FROM utilisateur WHERE email = 'citoyen@wasla.tn';
-INSERT IGNORE INTO facture (id_utilisateur, type_ressource, reference, periode_debut, periode_fin, quantite, montant, date_echeance, statut)
-SELECT id_utilisateur, 'electricite', 'STEG-2026-0918', '2026-09-01', '2026-10-31', 455.00, 98.740, '2026-11-25', 'a_payer' FROM utilisateur WHERE email = 'citoyen@wasla.tn';
-INSERT IGNORE INTO facture (id_utilisateur, type_ressource, reference, periode_debut, periode_fin, quantite, montant, date_echeance, statut)
-SELECT id_utilisateur, 'eau', 'SONEDE-2026-3Q', '2026-07-01', '2026-09-30', 38.00, 41.200, '2026-10-30', 'payee' FROM utilisateur WHERE email = 'citoyen@wasla.tn';
-
-INSERT IGNORE INTO consommation (id_utilisateur, id_facture, type_ressource, mois, quantite)
-SELECT f.id_utilisateur, f.id_facture, 'electricite', m.mois, m.q
-FROM facture f
-JOIN (SELECT '2026-07-01' AS mois, 330.00 AS q, 'STEG-2026-0715' AS ref
-      UNION ALL SELECT '2026-08-01', 290.00, 'STEG-2026-0715'
-      UNION ALL SELECT '2026-09-01', 240.00, 'STEG-2026-0918'
-      UNION ALL SELECT '2026-10-01', 215.00, 'STEG-2026-0918') m ON m.ref = f.reference
-JOIN utilisateur u ON u.id_utilisateur = f.id_utilisateur AND u.email = 'citoyen@wasla.tn';
-
-INSERT IGNORE INTO analyse_facture (id_facture, variation_pct, moyenne_zone, niveau, recommandation)
-SELECT f.id_facture, -26.61, 510.00, 'normal',
-       'Consommation en baisse de 27 % par rapport à l''été et inférieure à la moyenne de votre zone.'
-FROM facture f JOIN utilisateur u ON u.id_utilisateur = f.id_utilisateur
-WHERE u.email = 'citoyen@wasla.tn' AND f.reference = 'STEG-2026-0918';
+-- Module 2 : aucune donnée de démonstration.
+-- Les factures (et plus tard les consommations et analyses) sont saisies par les
+-- utilisateurs depuis le site : Mes factures (citoyen) ou le Back Office.
 
 -- Module 3
 INSERT INTO refuge_zone (id_entreprise, nom, adresse, id_zone, latitude, longitude, services, capacite, places_disponibles, horaires, accessible_pmr, statut)
