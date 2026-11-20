@@ -1,0 +1,67 @@
+/* ==========================================================================
+   Module 2 — Factures : compléments Back Office (Hiba).
+   Chargé par views/backoffice/pages/factures/*.php, sans toucher à admin.css.
+   ========================================================================== */
+
+/* Tableau : plus compact et sans retours à la ligne gênants. */
+.bill-admin-table th,
+.bill-admin-table td {
+  padding-inline: 11px;
+}
+
+.bill-admin-table .bill-nowrap {
+  white-space: nowrap;
+}
+
+.bill-admin-table .bill-client small {
+  display: block;
+  color: var(--color-text-secondary);
+}
+
+.bill-admin-table .bill-amount {
+  color: var(--color-heading);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.bill-admin-table .bill-period span {
+  display: block;
+  white-space: nowrap;
+}
+
+.bill-admin-table .bill-period span + span {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+
+.admin-table-count {
+  margin: 0;
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+}
+
+/* Formulaire : le fieldset « Statut » sans la bordure du navigateur. */
+fieldset.admin-field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+fieldset.admin-field legend {
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+/* Encadré « À savoir ». */
+.admin-aside-note dd {
+  margin: 2px 0 0;
+}
+
+.bill-admin-table th:first-child,
+.bill-admin-table td:first-child {
+  padding-inline-start: 20px;
+}

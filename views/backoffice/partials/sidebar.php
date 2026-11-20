@@ -27,6 +27,7 @@ $groups = [
         'label' => 'Factures & consommation',
         'icon'  => 'file-text',
         'links' => [
+            ['admin-factures', 'Factures', ['admin-facture-form']],
             ['admin-consommations', 'Données de consommation'],
             ['admin-citoyens', 'Comptes citoyens'],
         ],
