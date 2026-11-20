@@ -1,0 +1,212 @@
+/* ============================================================
+   WASLA — Design tokens (light + dark themes)
+   ============================================================ */
+
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/inter-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Arabic glyphs only: Latin text keeps Inter, the file loads only when Arabic appears. */
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  src: url("../fonts/plex-arabic/plex-arabic-400.woff2") format("woff2");
+  font-weight: 100 400;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200E;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  src: url("../fonts/plex-arabic/plex-arabic-500.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200E;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  src: url("../fonts/plex-arabic/plex-arabic-600.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200E;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  src: url("../fonts/plex-arabic/plex-arabic-700.woff2") format("woff2");
+  font-weight: 700 900;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200E;
+}
+
+:root {
+  color-scheme: light;
+
+  /* Brand palette */
+  --color-navy: #003b5c;
+  --color-navy-deep: #00293f;
+  --color-navy-soft: #0b4e72;
+  --color-network-blue: #005a9c;
+  --color-water-blue: #00a3d7;
+  --color-energy-green: #73d13d;
+  --color-energy-green-dark: #5dbd2c;
+  --color-emerald: #00a875;
+  --color-warning: #f5a800;
+  --color-outage: #d92d20;
+  --color-gray: #526579;
+
+  /* Surfaces */
+  --color-background: #eaf4fb;
+  --color-background-soft: #f4fafe;
+  --color-background-strip: #f2f8fc;
+  --color-surface: #ffffff;
+  --color-surface-rgb: 255, 255, 255;
+  --color-surface-muted: #f7fbfe;
+  --color-overlay-surface: rgba(255, 255, 255, 0.82);
+  --color-control-surface: rgba(255, 255, 255, 0.92);
+  --color-glow: rgba(255, 255, 255, 0.95);
+
+  /* Text */
+  --color-text: #102a43;
+  --color-heading: #003b5c;
+  --color-text-secondary: #526579;
+  --color-text-inverse: #ffffff;
+  --color-text-inverse-soft: rgba(255, 255, 255, 0.76);
+
+  /* Lines */
+  --color-border: #c9dce8;
+  --color-border-strong: #a9c8da;
+  --color-border-inverse: rgba(255, 255, 255, 0.18);
+
+  /* Tints */
+  --color-green-tint: #eaf8e2;
+  --color-blue-tint: #e3f4fc;
+  --color-emerald-tint: #e6f7f1;
+  --color-amber-tint: #fff4d9;
+  --color-red-tint: #fdecea;
+  --color-gray-tint: #f0f4f7;
+
+  /* Semantic text-safe status colours */
+  --color-green-text: #3e8a17;
+  --color-emerald-text: #007a55;
+  --color-amber-text: #8a5d00;
+  --color-amber-strong: #a87200;
+
+  /* Map */
+  --map-sea: #dceff7;
+  --map-sea-1: #f7fbfd;
+  --map-sea-2: #e4f1f7;
+  --map-sea-3: #d3e8f1;
+  --map-land-1: #f2e5cc;
+  --map-land-2: #e7d4b4;
+  --map-land-3: #d9c39e;
+  --map-land-stroke: #b69c75;
+  --map-line: rgba(0, 90, 156, 0.22);
+  --map-coast: rgba(0, 90, 156, 0.5);
+  --map-region: rgba(0, 90, 156, 0.18);
+  --map-grid: rgba(0, 90, 156, 0.045);
+  --map-label: rgba(0, 90, 156, 0.42);
+  --map-label-soft: rgba(0, 90, 156, 0.26);
+
+  /* Charts */
+  --chart-text: #526579;
+  --chart-grid: #c9dce8;
+  --chart-separator: #e7f1f7;
+
+  /* Typography — Arabic glyphs fall through to IBM Plex Sans Arabic */
+  --font-primary: "Inter", "IBM Plex Sans Arabic", Arial, Helvetica, sans-serif;
+
+  /* Shape */
+  --radius-card: 4px;
+  --radius-button: 2px;
+  --radius-input: 3px;
+  --radius-pill: 999px;
+
+  /* Elevation */
+  --shadow-card: 0 2px 8px rgba(0, 59, 92, 0.08);
+  --shadow-raised: 0 14px 34px rgba(0, 59, 92, 0.16);
+  --shadow-header: 0 1px 0 rgba(201, 220, 232, 0.95);
+
+  /* Layout */
+  --container: 1320px;
+  --gutter: 24px;
+  --header-height: 80px;
+  --section-y: 64px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --speed: 180ms;
+}
+
+/* Dark theme: same brand hues, tuned for low-light reading. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-navy: #0b4a6f;
+  --color-navy-deep: #06131d;
+  --color-navy-soft: #145f8c;
+  --color-network-blue: #5ab4ec;
+  --color-water-blue: #27b9ea;
+  --color-emerald: #1dbb86;
+  --color-outage: #f0574c;
+  --color-gray: #8a9db0;
+
+  --color-background: #0a1724;
+  --color-background-soft: #0c1b29;
+  --color-background-strip: #0d1e2d;
+  --color-surface: #0f2131;
+  --color-surface-rgb: 15, 33, 49;
+  --color-surface-muted: #142a3d;
+  --color-overlay-surface: rgba(10, 23, 36, 0.84);
+  --color-control-surface: rgba(15, 33, 49, 0.94);
+  --color-glow: rgba(0, 163, 215, 0.05);
+
+  --color-text: #dce8f2;
+  --color-heading: #f0f6fb;
+  --color-text-secondary: #9db2c5;
+  --color-text-inverse-soft: rgba(255, 255, 255, 0.74);
+
+  --color-border: #1f3a50;
+  --color-border-strong: #2d5172;
+  --color-border-inverse: rgba(255, 255, 255, 0.14);
+
+  --color-green-tint: rgba(115, 209, 61, 0.14);
+  --color-blue-tint: rgba(39, 185, 234, 0.14);
+  --color-emerald-tint: rgba(29, 187, 134, 0.15);
+  --color-amber-tint: rgba(245, 168, 0, 0.15);
+  --color-red-tint: rgba(240, 87, 76, 0.16);
+  --color-gray-tint: rgba(138, 157, 176, 0.14);
+
+  --color-green-text: #8fdd5f;
+  --color-emerald-text: #45d6a3;
+  --color-amber-text: #f6c453;
+  --color-amber-strong: #f3b63c;
+
+  --map-sea: #0a2131;
+  --map-sea-1: #0f2c40;
+  --map-sea-2: #0b2335;
+  --map-sea-3: #081a28;
+  --map-land-1: #4b4738;
+  --map-land-2: #423e31;
+  --map-land-3: #38352a;
+  --map-land-stroke: #6f6650;
+  --map-line: rgba(126, 200, 240, 0.22);
+  --map-coast: rgba(126, 200, 240, 0.45);
+  --map-region: rgba(126, 200, 240, 0.16);
+  --map-grid: rgba(126, 200, 240, 0.05);
+  --map-label: rgba(126, 200, 240, 0.5);
+  --map-label-soft: rgba(126, 200, 240, 0.32);
+
+  --chart-text: #9db2c5;
+  --chart-grid: #24425a;
+  --chart-separator: rgba(255, 255, 255, 0.06);
+
+  --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.28);
+  --shadow-raised: 0 18px 40px rgba(0, 0, 0, 0.45);
+  --shadow-header: 0 1px 0 rgba(0, 0, 0, 0.35);
+}

@@ -1,0 +1,386 @@
+/* ============================================================
+   WASLA — Motion: transitions, reveals, micro-interactions
+   Everything here is opt-in to motion: reduced-motion users get
+   instant state changes (see base.css and prefs.js).
+   ============================================================ */
+
+/* Theme switch: colours cross-fade for a moment ------------ */
+
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition:
+    background-color 360ms ease,
+    border-color 360ms ease,
+    color 360ms ease,
+    fill 360ms ease,
+    stroke 360ms ease,
+    box-shadow 360ms ease !important;
+  transition-delay: 0s !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Page transitions --------------------------------------- */
+
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-old(root) {
+    animation: vt-out 180ms var(--ease) both;
+  }
+
+  ::view-transition-new(root) {
+    animation: vt-in 420ms var(--ease-out) both;
+  }
+
+  ::view-transition-old(site-header),
+  ::view-transition-new(site-header) {
+    animation-duration: 160ms;
+  }
+
+  .page-enter main {
+    animation: page-in 560ms var(--ease-out) backwards;
+  }
+
+  .is-leaving main,
+  .is-leaving .site-footer {
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 170ms var(--ease), transform 170ms var(--ease);
+  }
+
+  /* Hero entrance ------------------------------------------ */
+
+  .hero__copy > * {
+    animation: rise 760ms var(--ease-out) backwards;
+  }
+
+  .hero__copy > :nth-child(2) { animation-delay: 80ms; }
+  .hero__copy > :nth-child(3) { animation-delay: 160ms; }
+  .hero__copy > :nth-child(4) { animation-delay: 240ms; }
+  .hero__copy > :nth-child(5) { animation-delay: 320ms; }
+
+  .hero__network {
+    animation: fade-in 1200ms var(--ease) 200ms backwards;
+  }
+
+  .hero__network .mesh-node {
+    animation: node-glow 3.2s ease-in-out infinite;
+  }
+
+  .hero__network .mesh-node:nth-child(3n) { animation-delay: 0.8s; }
+  .hero__network .mesh-node:nth-child(3n + 1) { animation-delay: 1.6s; }
+
+  .hero__media img {
+    animation: hero-zoom 1600ms var(--ease-out) backwards;
+  }
+
+  /* Scroll reveal (class set by prefs.js, revealed by motion.js) */
+
+  .reveal-on :is(
+    .feature-item, .dashboard-heading, .kpi-card, .map-card, .alert-card,
+    .engagements__intro, .engagement-stat, .engagements__visual,
+    .page-hero__row, .summary-card, .filter-bar, .map-page-side > .card,
+    .analysis-toolbar, .stat-card, .chart-card, .page-section .container > .card,
+    .service-card, .step, .cta-band, .about-copy, .about-visual, .value-card,
+    .coverage-band, #mentions, .login-brand, .login-form-wrap, .footer-main > *
+  ):not(.is-revealed) {
+    opacity: 0;
+  }
+
+  .reveal-on .is-revealed {
+    animation: reveal-up 680ms var(--ease-out) var(--reveal-delay, 0ms) backwards;
+  }
+
+  /* Panels, menus, dialogs --------------------------------- */
+
+  .dropdown:not([hidden]) {
+    animation: dropdown-in 220ms var(--ease-out) both;
+  }
+
+  .notification-panel:not([hidden]),
+  .lang-menu:not([hidden]) {
+    transform-origin: top center;
+    animation: pop-in 220ms var(--ease-out) both;
+  }
+
+  .modal:not([hidden]),
+  .menu-backdrop:not([hidden]) {
+    animation: fade-in 220ms var(--ease) both;
+  }
+
+  .modal:not([hidden]) .modal__panel {
+    animation: modal-in 320ms var(--ease-out) both;
+  }
+
+  .map-tooltip:not([hidden]) {
+    animation: tooltip-in 180ms var(--ease-out) both;
+  }
+
+  .mobile-menu__sub:not([hidden]) {
+    animation: slide-down 240ms var(--ease-out) both;
+  }
+
+  .mobile-menu.is-open .mobile-menu__nav > *,
+  .mobile-menu.is-open .mobile-menu__prefs,
+  .mobile-menu.is-open .mobile-menu__actions {
+    animation: slide-in 420ms var(--ease-out) backwards;
+  }
+
+  .mobile-menu.is-open .mobile-menu__nav > :nth-child(2) { animation-delay: 40ms; }
+  .mobile-menu.is-open .mobile-menu__nav > :nth-child(3) { animation-delay: 80ms; }
+  .mobile-menu.is-open .mobile-menu__nav > :nth-child(4) { animation-delay: 120ms; }
+  .mobile-menu.is-open .mobile-menu__nav > :nth-child(5) { animation-delay: 160ms; }
+  .mobile-menu.is-open .mobile-menu__nav > :nth-child(6) { animation-delay: 200ms; }
+  .mobile-menu.is-open .mobile-menu__prefs { animation-delay: 220ms; }
+  .mobile-menu.is-open .mobile-menu__actions { animation-delay: 260ms; }
+
+  /* Lists rendered by scripts fade in, lightly staggered. */
+  .search-result,
+  .zone-item,
+  .data-table tbody tr,
+  .notification-item {
+    animation: item-in 360ms var(--ease-out) backwards;
+  }
+
+  :is(.search-result, .zone-item, .data-table tbody tr, .notification-item):nth-child(2) { animation-delay: 30ms; }
+  :is(.search-result, .zone-item, .data-table tbody tr, .notification-item):nth-child(3) { animation-delay: 60ms; }
+  :is(.search-result, .zone-item, .data-table tbody tr, .notification-item):nth-child(4) { animation-delay: 90ms; }
+  :is(.search-result, .zone-item, .data-table tbody tr, .notification-item):nth-child(5) { animation-delay: 120ms; }
+  :is(.search-result, .zone-item, .data-table tbody tr, .notification-item):nth-child(n + 6) { animation-delay: 150ms; }
+
+  .toast {
+    transform: translateX(-50%) translateY(18px) scale(0.96);
+    transition: opacity 240ms var(--ease), transform 340ms var(--ease-out);
+  }
+
+  .toast.is-visible {
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+
+  .field__error.is-visible {
+    animation: slide-down 220ms var(--ease-out) both;
+  }
+
+  .is-invalid {
+    animation: shake 360ms var(--ease);
+  }
+
+  .icon-btn__badge {
+    animation: badge-pop 520ms var(--ease-out) 600ms backwards;
+  }
+
+  .live-dot {
+    animation: live-pulse 2.4s ease-out infinite;
+  }
+
+  /* Charts ------------------------------------------------- */
+
+  .chart-anim-line {
+    stroke-dasharray: 1;
+    animation: draw-line 1100ms var(--ease-out) backwards;
+  }
+
+  .chart-anim-fade {
+    animation: fade-in 700ms var(--ease) 260ms backwards;
+  }
+
+  .chart-anim-pop {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: pop-dot 360ms var(--ease-out) 700ms backwards;
+  }
+
+  .chart-anim-bar {
+    transform-box: fill-box;
+    transform-origin: left center;
+    animation: grow-x 760ms var(--ease-out) backwards;
+  }
+
+  /* Hover micro-interactions (pointer devices only) -------- */
+
+  .kpi-card,
+  .summary-card,
+  .stat-card,
+  .value-card,
+  .step,
+  .chart-card {
+    transition: transform var(--speed) var(--ease), box-shadow var(--speed) var(--ease), border-color var(--speed) var(--ease);
+  }
+
+  .feature-item__icon,
+  .kpi-card__icon,
+  .summary-card__icon,
+  .service-card__icon,
+  .value-card svg,
+  .engagements__visual img,
+  .about-visual img,
+  .alert-card__media img {
+    transition: transform 420ms var(--ease-out);
+  }
+
+  .icon-btn,
+  .map-control,
+  .chip,
+  .tab {
+    transition: background var(--speed) var(--ease), border-color var(--speed) var(--ease), color var(--speed) var(--ease), transform 120ms var(--ease);
+  }
+
+  .btn:active,
+  .icon-btn:active,
+  .map-control:active,
+  .chip:active,
+  .tab:active {
+    transform: scale(0.96);
+  }
+
+  @media (hover: hover) {
+    :is(.kpi-card, .summary-card, .stat-card, .value-card, .step):hover {
+      transform: translateY(-2px);
+      border-color: var(--color-border-strong);
+      box-shadow: var(--shadow-raised);
+    }
+
+    .feature-item:hover .feature-item__icon,
+    .kpi-card:hover .kpi-card__icon,
+    .summary-card:hover .summary-card__icon,
+    .service-card:hover .service-card__icon,
+    .value-card:hover svg {
+      transform: translateY(-2px) scale(1.08);
+    }
+
+    .engagements__visual:hover img,
+    .about-visual:hover img,
+    .alert-card:hover .alert-card__media img {
+      transform: scale(1.04);
+    }
+
+    .theme-toggle:hover svg {
+      transform: rotate(18deg);
+    }
+  }
+}
+
+/* Header elevation once the page scrolls ------------------- */
+
+.site-header.is-scrolled {
+  box-shadow: 0 6px 22px rgba(0, 41, 63, 0.1);
+}
+
+[data-theme="dark"] .site-header.is-scrolled {
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
+}
+
+/* Loading placeholders while scripts render ---------------- */
+
+:is([data-line-chart], [data-bar-chart], [data-services-grid]):empty {
+  min-height: 220px;
+  border-radius: var(--radius-card);
+  background: linear-gradient(100deg, var(--color-surface-muted) 30%, var(--color-background) 50%, var(--color-surface-muted) 70%);
+  background-size: 220% 100%;
+  animation: shimmer 1.3s linear infinite;
+}
+
+/* Keyframes ------------------------------------------------- */
+
+@keyframes vt-out {
+  to { opacity: 0; transform: translateY(-6px); }
+}
+
+@keyframes vt-in {
+  from { opacity: 0; transform: translateY(12px); }
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(12px); }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(22px); }
+}
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(22px); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
+@keyframes hero-zoom {
+  from { transform: scale(1.06); }
+}
+
+@keyframes node-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to { opacity: 1; transform: translateX(-50%); }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+}
+
+@keyframes tooltip-in {
+  from { opacity: 0; transform: translate(-50%, calc(-100% - 6px)); }
+  to { opacity: 1; transform: translate(-50%, calc(-100% - 12px)); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-4px); }
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(10px); }
+}
+
+@keyframes item-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+
+@keyframes badge-pop {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 168, 117, 0.45); }
+  70% { box-shadow: 0 0 0 7px rgba(0, 168, 117, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 168, 117, 0); }
+}
+
+@keyframes draw-line {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes pop-dot {
+  from { opacity: 0; transform: scale(0); }
+}
+
+@keyframes grow-x {
+  from { transform: scaleX(0); }
+}
+
+@keyframes shimmer {
+  from { background-position: 120% 0; }
+  to { background-position: -120% 0; }
+}
