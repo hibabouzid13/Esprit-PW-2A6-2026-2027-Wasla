@@ -21,7 +21,8 @@ class FactureModel
     private int $idFacture = 0;
     private int $idUtilisateur = 0;
     private string $typeRessource = 'electricite';
-    private string $reference = '';
+    private string $referenceAbonnement = '';
+    private ?string $referencePaiement = null;
     private string $periodeDebut = '';
     private string $periodeFin = '';
     private float $quantite = 0.0;
@@ -45,7 +46,8 @@ class FactureModel
     public function getIdFacture(): int { return $this->idFacture; }
     public function getIdUtilisateur(): int { return $this->idUtilisateur; }
     public function getTypeRessource(): string { return $this->typeRessource; }
-    public function getReference(): string { return $this->reference; }
+    public function getReferenceAbonnement(): string { return $this->referenceAbonnement; }
+    public function getReferencePaiement(): ?string { return $this->referencePaiement; }
     public function getPeriodeDebut(): string { return $this->periodeDebut; }
     public function getPeriodeFin(): string { return $this->periodeFin; }
     public function getQuantite(): float { return $this->quantite; }
@@ -63,7 +65,8 @@ class FactureModel
     public function setIdFacture(int $id): void { $this->idFacture = $id; }
     public function setIdUtilisateur(int $id): void { $this->idUtilisateur = $id; }
     public function setTypeRessource(string $type): void { $this->typeRessource = $type; }
-    public function setReference(string $reference): void { $this->reference = $reference; }
+    public function setReferenceAbonnement(string $reference): void { $this->referenceAbonnement = $reference; }
+    public function setReferencePaiement(?string $reference): void { $this->referencePaiement = $reference; }
     public function setPeriodeDebut(string $date): void { $this->periodeDebut = $date; }
     public function setPeriodeFin(string $date): void { $this->periodeFin = $date; }
     public function setQuantite(float $quantite): void { $this->quantite = $quantite; }
@@ -84,7 +87,8 @@ class FactureModel
         $f->setIdFacture((int) ($row['id_facture'] ?? 0));
         $f->setIdUtilisateur((int) ($row['id_utilisateur'] ?? 0));
         $f->setTypeRessource((string) ($row['type_ressource'] ?? 'electricite'));
-        $f->setReference((string) ($row['reference'] ?? ''));
+        $f->setReferenceAbonnement((string) ($row['reference_abonnement'] ?? ''));
+        $f->setReferencePaiement(isset($row['reference_paiement']) && $row['reference_paiement'] !== '' ? (string) $row['reference_paiement'] : null);
         $f->setPeriodeDebut((string) ($row['periode_debut'] ?? ''));
         $f->setPeriodeFin((string) ($row['periode_fin'] ?? ''));
         $f->setQuantite((float) ($row['quantite'] ?? 0));

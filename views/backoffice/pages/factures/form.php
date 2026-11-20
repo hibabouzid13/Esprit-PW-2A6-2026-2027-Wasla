@@ -10,6 +10,14 @@ $edition = $facture !== null;
 $action = $edition ? url('admin-facture-form', ['id' => $facture->getIdFacture()]) : url('admin-facture-form');
 $err = fn (string $k): string => isset($errors[$k]) ? ' has-error' : '';
 $msg = fn (string $k): string => '<p class="admin-field__error">' . e($errors[$k] ?? '') . '</p>';
+// Fournisseur courant (imposé pour STEG / SONEDE) : unité et exemples affichés même sans JavaScript
+$typeCourant = $typeImpose !== '' ? $typeImpose : $old['type_ressource'];
+$unite = $typeCourant === 'eau' ? 'm³' : 'kWh';
+$exQte = $typeCourant === 'eau' ? '22.5 ou 22.5 m³' : '455 ou 455 kWh';
+$ex = [
+    'electricite' => ['Ex : 937974800', 'Ex : 0000049937974800 (facultatif)', '9 chiffres, en haut de la facture STEG.', '16 chiffres, sur le talon en bas de la facture.'],
+    'eau'         => ['Ex : 123456789', 'Ex : 00123456789012 (facultatif)', '8 ou 9 chiffres (code district + numéro de police), en haut de la facture SONEDE.', '12 à 16 chiffres, sur le talon en bas de la facture.'],
+][$typeCourant] ?? ["Choisissez d'abord le fournisseur", "Choisissez d'abord le fournisseur", 'Choisissez le fournisseur pour voir le format attendu.', 'Facultatif : talon en bas de la facture.'];
 ?>
         <link rel="stylesheet" href="<?= e(asset('css/factures-admin.css', 'backoffice')) ?>">
         <div class="admin-page-head">
@@ -20,7 +28,7 @@ $msg = fn (string $k): string => '<p class="admin-field__error">' . e($errors[$k
             <div class="admin-page-head__title">
               <span class="admin-page-head__icon" data-icon="file-text"></span>
               <div>
-                <h1><?= $edition ? 'Modifier la facture ' . e($facture->getReference()) : 'Ajouter une facture' ?></h1>
+                <h1><?= $edition ? 'Modifier la ' . e(lcfirst(FactureController::titre($facture))) : 'Ajouter une facture' ?></h1>
                 <p><?= $edition ? 'Titulaire : ' . e($facture->getNomClient()) . ' (' . e($facture->getEmailClient()) . ')' : 'Enregistrer une facture pour un citoyen' ?></p>
               </div>
             </div>
@@ -49,14 +57,14 @@ $msg = fn (string $k): string => '<p class="admin-field__error">' . e($errors[$k
                 </div>
 <?php endif; ?>
 
-                <div class="admin-field<?= $err('type_ressource') ?>">
-                  <label for="type_ressource">Ressource <span class="req">*</span></label>
+                <div class="admin-field admin-field--full<?= $err('type_ressource') ?>">
+                  <label for="type_ressource">Fournisseur <span class="req">*</span></label>
 <?php if ($typeImpose !== ''): ?>
                   <!-- STEG / SONEDE : ressource imposée par le rôle (revérifiée en PHP) -->
                   <input type="hidden" name="type_ressource" value="<?= e($typeImpose) ?>">
                   <input class="admin-input" id="type_ressource" type="text" value="<?= e(FactureController::typeLabel($typeImpose)) ?>" readonly>
 <?php else: ?>
-                  <select class="admin-select" id="type_ressource" name="type_ressource" data-rules="required|in:electricite,eau" data-message-required="Choisissez la ressource.">
+                  <select class="admin-select" id="type_ressource" name="type_ressource" data-rules="required|in:electricite,eau" data-message-required="Choisissez le fournisseur.">
                     <option value="">— Choisir —</option>
 <?php foreach (FactureModel::TYPES as $t): ?>
                     <option value="<?= $t ?>"<?= $old['type_ressource'] === $t ? ' selected' : '' ?>><?= e(FactureController::typeLabel($t)) ?></option>
@@ -66,15 +74,21 @@ $msg = fn (string $k): string => '<p class="admin-field__error">' . e($errors[$k
                   <?= $msg('type_ressource') ?>
                 </div>
 
-                <div class="admin-field<?= $err('reference') ?>">
-                  <label for="reference">Référence <span class="req">*</span></label>
-                  <?php $typeRef = $typeImpose !== '' ? $typeImpose : $old['type_ressource'];
-                        $exRef = ['electricite' => 'STG-20260918', 'eau' => 'SND-20260930'][$typeRef] ?? ''; ?>
-                  <input class="admin-input" id="reference" name="reference" type="text" autocomplete="off" value="<?= e($old['reference']) ?>"
-                         placeholder="<?= $exRef !== '' ? 'ex. ' . $exRef : "Choisissez d'abord la ressource" ?>"
-                         data-rules="required|max:30" data-message-required="Indiquez la référence de la facture." data-message-max="La référence est trop longue (30 caractères au plus).">
-                  <p class="admin-field__hint" data-bill-ref-hint><?= $exRef !== '' ? 'Format : ' . substr($exRef, 0, 3) . '- suivi de chiffres (ex. ' . $exRef . ').' : 'STG-chiffres pour la STEG, SND-chiffres pour la SONEDE.' ?></p>
-                  <?= $msg('reference') ?>
+                <div class="admin-field<?= $err('reference_abonnement') ?>">
+                  <label for="reference_abonnement">Référence d'abonnement <span class="req">*</span></label>
+                  <input class="admin-input" id="reference_abonnement" name="reference_abonnement" type="text" inputmode="numeric" autocomplete="off"
+                         value="<?= e($old['reference_abonnement']) ?>" placeholder="<?= e($ex[0]) ?>" aria-describedby="abo-hint"
+                         data-rules="required" data-message-required="Indiquez la référence d'abonnement (en haut de la facture).">
+                  <p class="admin-field__hint" id="abo-hint" data-bill-abo-hint><?= e($ex[2]) ?></p>
+                  <?= $msg('reference_abonnement') ?>
+                </div>
+
+                <div class="admin-field<?= $err('reference_paiement') ?>">
+                  <label for="reference_paiement">Référence de paiement (talon) <span class="admin-field__optional">(facultatif)</span></label>
+                  <input class="admin-input" id="reference_paiement" name="reference_paiement" type="text" inputmode="numeric" autocomplete="off"
+                         value="<?= e($old['reference_paiement']) ?>" placeholder="<?= e($ex[1]) ?>" aria-describedby="paie-hint">
+                  <p class="admin-field__hint" id="paie-hint" data-bill-paie-hint><?= e($ex[3]) ?></p>
+                  <?= $msg('reference_paiement') ?>
                 </div>
 
                 <div class="admin-field<?= $err('periode_debut') ?>">
@@ -92,8 +106,8 @@ $msg = fn (string $k): string => '<p class="admin-field__error">' . e($errors[$k
                 </div>
 
                 <div class="admin-field<?= $err('quantite') ?>">
-                  <label for="quantite">Consommation (<span data-bill-unit>kWh</span>) <span class="req">*</span></label>
-                  <input class="admin-input" id="quantite" name="quantite" type="text" autocomplete="off" value="<?= e($old['quantite']) ?>" placeholder="ex. 455 ou 455 kWh"
+                  <label for="quantite">Consommation (<span data-bill-unit><?= $unite ?></span>) <span class="req">*</span></label>
+                  <input class="admin-input" id="quantite" name="quantite" type="text" autocomplete="off" value="<?= e($old['quantite']) ?>" placeholder="ex. <?= $exQte ?>"
                          data-rules="required|max:20" data-message-required="Indiquez la consommation." data-message-max="Valeur trop longue.">
                   <?= $msg('quantite') ?>
                 </div>
@@ -106,10 +120,9 @@ $msg = fn (string $k): string => '<p class="admin-field__error">' . e($errors[$k
                 </div>
 
                 <div class="admin-field<?= $err('date_echeance') ?>">
-                  <label for="date_echeance">Date limite de paiement</label>
+                  <label for="date_echeance">Date limite de paiement <span class="admin-field__optional">(facultatif)</span></label>
                   <input class="admin-input" id="date_echeance" name="date_echeance" type="date" value="<?= e($old['date_echeance']) ?>"
                          data-rules="date">
-                  <p class="admin-field__hint">Facultatif.</p>
                   <?= $msg('date_echeance') ?>
                 </div>
 
@@ -141,7 +154,7 @@ $msg = fn (string $k): string => '<p class="admin-field__error">' . e($errors[$k
             <div class="admin-card__body admin-aside-note">
               <dl>
                 <div><dt>Périmètre</dt><dd><?= $typeImpose !== '' ? 'Votre rôle ne gère que les factures ' . e(FactureController::typeLabel($typeImpose)) . '.' : 'Super admin : toutes les factures.' ?></dd></div>
-                <div><dt>Référence</dt><dd>STG-chiffres (STEG) ou SND-chiffres (SONEDE), unique par citoyen.</dd></div>
+                <div><dt>Références</dt><dd>Chiffres uniquement, espaces retirés. Abonnement (obligatoire) : STEG 9 chiffres, SONEDE 8 ou 9. Talon (facultatif) : STEG 16 chiffres, SONEDE 12 à 16, une seule fois par citoyen.</dd></div>
                 <div><dt>Période</dt><dd>Depuis 2016, jamais dans le futur. STEG : 15 jours à 12 mois. SONEDE : 15 jours à 6 mois. Pas de chevauchement avec une autre facture du même fournisseur.</dd></div>
                 <div><dt>Date limite de paiement</dt><dd>Entre la fin de la période et 90 jours après.</dd></div>
               </dl>

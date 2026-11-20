@@ -66,10 +66,10 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
             <input type="hidden" name="action" value="mes-factures">
             <div class="field">
               <label for="f-q">Référence</label>
-              <input class="input" id="f-q" name="q" type="text" placeholder="ex. STG-2026" value="<?= e($filters['q']) ?>" data-rules="max:50">
+              <input class="input" id="f-q" name="q" type="text" inputmode="numeric" autocomplete="off" placeholder="N° d'abonnement ou de talon" value="<?= e($filters['q']) ?>">
             </div>
             <div class="field">
-              <label for="f-type">Ressource</label>
+              <label for="f-type">Fournisseur</label>
               <select class="select" id="f-type" name="type">
                 <option value="">Toutes</option>
 <?php foreach (FactureModel::TYPES as $t): ?>
@@ -118,8 +118,8 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
             <table class="data-table svc-table">
               <thead>
                 <tr>
-                  <th scope="col">Référence</th>
-                  <th scope="col">Ressource</th>
+                  <th scope="col">Fournisseur</th>
+                  <th scope="col">Références</th>
                   <th scope="col">Période</th>
                   <th scope="col">Consommation</th>
                   <th scope="col">Montant</th>
@@ -131,8 +131,13 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
               <tbody>
 <?php foreach ($factures as $f): ?>
                 <tr>
-                  <td data-no-i18n><strong><?= e($f->getReference()) ?></strong></td>
                   <td><span class="svc-tag <?= $f->getTypeRessource() === 'eau' ? 'svc-tag--green' : 'svc-tag--blue' ?>"><?= e(FactureController::typeLabel($f->getTypeRessource())) ?></span></td>
+                  <td class="bill-refs" data-no-i18n>
+                    <strong title="Référence d'abonnement"><?= e(FactureController::formatReference($f->getReferenceAbonnement())) ?></strong>
+<?php if ($f->getReferencePaiement() !== null): ?>
+                    <small title="Référence de paiement (talon)">Talon <?= e(FactureController::formatReference($f->getReferencePaiement(), 4)) ?></small>
+<?php endif; ?>
+                  </td>
                   <td><?= e(dateFr($f->getPeriodeDebut())) ?> → <?= e(dateFr($f->getPeriodeFin())) ?></td>
                   <td><?= e(FactureController::formatQuantite($f->getQuantite(), $f->getTypeRessource())) ?></td>
                   <td><strong><?= e(FactureController::formatMontant($f->getMontant())) ?></strong></td>
@@ -140,11 +145,11 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
                   <td><span class="svc-tag <?= $f->getStatut() === 'payee' ? 'svc-tag--green' : 'svc-tag--demo' ?>"><?= e(FactureController::statutLabel($f->getStatut())) ?></span></td>
                   <td>
                     <div class="svc-actions">
-                      <a class="svc-icon-btn" href="<?= url('facture-voir', ['id' => $f->getIdFacture()]) ?>" aria-label="Voir la facture <?= e($f->getReference()) ?>" title="Voir"><span data-icon="eye"></span></a>
-                      <form method="post" action="<?= url('facture-supprimer') ?>" data-confirm="Supprimer la facture <?= e($f->getReference()) ?> ? Cette action est définitive.">
+                      <a class="svc-icon-btn" href="<?= url('facture-voir', ['id' => $f->getIdFacture()]) ?>" aria-label="Voir la <?= e(lcfirst(FactureController::titre($f))) ?>" title="Voir"><span data-icon="eye"></span></a>
+                      <form method="post" action="<?= url('facture-supprimer') ?>" data-confirm="Supprimer la <?= e(lcfirst(FactureController::titre($f))) ?> ? Cette action est définitive.">
                         <?= csrfField() ?>
                         <input type="hidden" name="id_facture" value="<?= $f->getIdFacture() ?>">
-                        <button class="svc-icon-btn svc-icon-btn--danger" type="submit" aria-label="Supprimer la facture <?= e($f->getReference()) ?>" title="Supprimer"><span data-icon="trash"></span></button>
+                        <button class="svc-icon-btn svc-icon-btn--danger" type="submit" aria-label="Supprimer la <?= e(lcfirst(FactureController::titre($f))) ?>" title="Supprimer"><span data-icon="trash"></span></button>
                       </form>
                     </div>
                   </td>

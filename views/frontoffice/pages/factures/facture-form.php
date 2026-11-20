@@ -9,8 +9,11 @@ ob_start();
 $edition = $mode === 'modification';
 $action = $edition ? url('facture-modifier', ['id' => $facture->getIdFacture()]) : url('facture-ajouter');
 $unite = $old['type_ressource'] === 'eau' ? 'm³' : 'kWh';
-// Exemples selon la ressource (mis à jour par factures-crud.js quand on change de ressource)
-$exRef = ['electricite' => 'STG-20260918', 'eau' => 'SND-20260930'][$old['type_ressource']] ?? '';
+// Exemples selon le fournisseur (mis à jour par factures-crud.js quand on change de fournisseur)
+$ex = [
+    'electricite' => ['Ex : 937974800', 'Ex : 0000049937974800 (facultatif)', '9 chiffres, en haut de la facture STEG.', '16 chiffres, sur le talon en bas de la facture.'],
+    'eau'         => ['Ex : 123456789', 'Ex : 00123456789012 (facultatif)', '8 ou 9 chiffres (code district + numéro de police), en haut de la facture SONEDE.', '12 à 16 chiffres, sur le talon en bas de la facture.'],
+][$old['type_ressource']] ?? ["Choisissez d'abord le fournisseur", "Choisissez d'abord le fournisseur", 'Choisissez le fournisseur pour voir le format attendu.', 'Facultatif : talon en bas de la facture.'];
 $exQte = $old['type_ressource'] === 'eau' ? '22.5 ou 22.5 m³' : '455 ou 455 kWh';
 ?>
   <main id="main">
@@ -22,7 +25,7 @@ $exQte = $old['type_ressource'] === 'eau' ? '22.5 ou 22.5 m³' : '455 ou 455 kWh
           <a href="<?= url('mes-factures') ?>">Mes factures</a>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="icon-dir"><path d="m9 18 6-6-6-6"/></svg>
 <?php if ($edition): ?>
-          <a href="<?= url('facture-voir', ['id' => $facture->getIdFacture()]) ?>" data-no-i18n><?= e($facture->getReference()) ?></a>
+          <a href="<?= url('facture-voir', ['id' => $facture->getIdFacture()]) ?>" data-no-i18n><?= e(FactureController::titre($facture)) ?></a>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="icon-dir"><path d="m9 18 6-6-6-6"/></svg>
 <?php endif; ?>
           <span aria-current="page"><?= $edition ? 'Modifier' : 'Ajouter' ?></span>
@@ -45,9 +48,9 @@ $exQte = $old['type_ressource'] === 'eau' ? '22.5 ou 22.5 m³' : '455 ou 455 kWh
 
             <div class="form-row">
               <div class="field">
-                <label for="b-type">Ressource</label>
+                <label for="b-type">Fournisseur</label>
                 <select class="select<?= invalidClass($errors, 'type_ressource') ?>" id="b-type" name="type_ressource"
-                        data-rules="required|in:electricite,eau" data-message-required="Choisissez le type de facture.">
+                        data-rules="required|in:electricite,eau" data-message-required="Choisissez le fournisseur.">
                   <option value="">Choisir…</option>
 <?php foreach (FactureModel::TYPES as $t): ?>
                   <option value="<?= $t ?>"<?= $old['type_ressource'] === $t ? ' selected' : '' ?>><?= e(FactureController::typeLabel($t)) ?></option>
@@ -55,14 +58,25 @@ $exQte = $old['type_ressource'] === 'eau' ? '22.5 ou 22.5 m³' : '455 ou 455 kWh
                 </select>
                 <?= fieldError($errors, 'type_ressource') ?>
               </div>
+            </div>
+
+            <div class="form-row">
               <div class="field">
-                <label for="b-ref">Référence de la facture</label>
-                <input class="input<?= invalidClass($errors, 'reference') ?>" id="b-ref" name="reference" type="text" autocomplete="off"
-                       placeholder="<?= $exRef !== '' ? 'ex. ' . $exRef : "Choisissez d'abord la ressource" ?>"
-                       value="<?= e($old['reference']) ?>" data-rules="required|max:30" data-message-required="Indiquez la référence imprimée sur la facture."
-                       data-message-max="La référence est trop longue (30 caractères au plus).">
-                <p class="field__hint" data-bill-ref-hint><?= $exRef !== '' ? 'Format : ' . substr($exRef, 0, 3) . '- suivi de chiffres (ex. ' . $exRef . ').' : 'STG-chiffres pour la STEG, SND-chiffres pour la SONEDE.' ?></p>
-                <?= fieldError($errors, 'reference') ?>
+                <label for="b-abo">Référence d'abonnement</label>
+                <input class="input<?= invalidClass($errors, 'reference_abonnement') ?>" id="b-abo" name="reference_abonnement" type="text"
+                       inputmode="numeric" autocomplete="off" placeholder="<?= e($ex[0]) ?>" value="<?= e($old['reference_abonnement']) ?>"
+                       data-rules="required" data-message-required="Indiquez la référence d'abonnement (en haut de la facture)."
+                       aria-describedby="b-abo-hint">
+                <p class="field__hint" id="b-abo-hint" data-bill-abo-hint><?= e($ex[2]) ?></p>
+                <?= fieldError($errors, 'reference_abonnement') ?>
+              </div>
+              <div class="field">
+                <label for="b-paie">Référence de paiement (talon) <span class="field__optional">(facultatif)</span></label>
+                <input class="input<?= invalidClass($errors, 'reference_paiement') ?>" id="b-paie" name="reference_paiement" type="text"
+                       inputmode="numeric" autocomplete="off" placeholder="<?= e($ex[1]) ?>" value="<?= e($old['reference_paiement']) ?>"
+                       aria-describedby="b-paie-hint">
+                <p class="field__hint" id="b-paie-hint" data-bill-paie-hint><?= e($ex[3]) ?></p>
+                <?= fieldError($errors, 'reference_paiement') ?>
               </div>
             </div>
 

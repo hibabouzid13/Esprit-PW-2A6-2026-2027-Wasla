@@ -56,6 +56,21 @@ fieldset.admin-field legend {
   padding: 0;
 }
 
+/* Mention « (facultatif) » dans un libellé. */
+.admin-field__optional {
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+/* Deux références dans une cellule : abonnement, puis talon en petit. */
+.bill-admin-table .bill-refs small {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
 /* Encadré « À savoir ». */
 .admin-aside-note dd {
   margin: 2px 0 0;

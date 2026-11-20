@@ -11,6 +11,7 @@ $payee = $facture->getStatut() === 'payee';
 $debut = new DateTimeImmutable($facture->getPeriodeDebut());
 $fin = new DateTimeImmutable($facture->getPeriodeFin());
 $jours = (int) $debut->diff($fin)->days;
+$titre = FactureController::titre($facture);
 ?>
   <main id="main">
     <section class="page-hero">
@@ -20,11 +21,11 @@ $jours = (int) $debut->diff($fin)->days;
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="icon-dir"><path d="m9 18 6-6-6-6"/></svg>
           <a href="<?= url('mes-factures') ?>">Mes factures</a>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="icon-dir"><path d="m9 18 6-6-6-6"/></svg>
-          <span aria-current="page" data-no-i18n><?= e($facture->getReference()) ?></span>
+          <span aria-current="page" data-no-i18n>Facture <?= e(FactureController::fournisseur($type)) ?></span>
         </nav>
         <p class="eyebrow">Module 02 · Factures &amp; consommation</p>
-        <h1 data-no-i18n><?= e($facture->getReference()) ?></h1>
-        <p>Facture <?= e(FactureController::typeLabel($type)) ?> du <?= e(dateFr($facture->getPeriodeDebut())) ?> au <?= e(dateFr($facture->getPeriodeFin())) ?>.</p>
+        <h1 data-no-i18n><?= e($titre) ?></h1>
+        <p>Abonnement <span data-no-i18n><?= e(FactureController::formatReference($facture->getReferenceAbonnement())) ?></span> · <?= e(FactureController::typeLabel($type)) ?>.</p>
       </div>
     </section>
 
@@ -41,8 +42,9 @@ $jours = (int) $debut->diff($fin)->days;
           </header>
 
           <dl class="bill-detail__grid">
-            <div><dt>Ressource</dt><dd><span class="svc-tag <?= $type === 'eau' ? 'svc-tag--green' : 'svc-tag--blue' ?>"><?= e(FactureController::typeLabel($type)) ?></span></dd></div>
-            <div><dt>Référence</dt><dd data-no-i18n><?= e($facture->getReference()) ?></dd></div>
+            <div><dt>Fournisseur</dt><dd><span class="svc-tag <?= $type === 'eau' ? 'svc-tag--green' : 'svc-tag--blue' ?>"><?= e(FactureController::typeLabel($type)) ?></span></dd></div>
+            <div><dt>Référence d'abonnement</dt><dd data-no-i18n><?= e(FactureController::formatReference($facture->getReferenceAbonnement())) ?></dd></div>
+            <div><dt>Référence de paiement (talon)</dt><dd data-no-i18n><?= $facture->getReferencePaiement() !== null ? e(FactureController::formatReference($facture->getReferencePaiement(), 4)) : '<span class="text-muted">Non renseignée</span>' ?></dd></div>
             <div><dt>Période</dt><dd><?= e(dateFr($facture->getPeriodeDebut())) ?> → <?= e(dateFr($facture->getPeriodeFin())) ?> <small>(<?= $jours ?> jours)</small></dd></div>
             <div><dt>Consommation</dt><dd><?= e(FactureController::formatQuantite($facture->getQuantite(), $type)) ?></dd></div>
             <div><dt>Date limite de paiement</dt><dd><?= $facture->getDateEcheance() ? e(dateFr($facture->getDateEcheance())) : '<span class="text-muted">Non renseignée</span>' ?></dd></div>
@@ -51,7 +53,7 @@ $jours = (int) $debut->diff($fin)->days;
 
           <footer class="svc-actions bill-detail__actions">
             <a class="btn btn--ghost" href="<?= url('mes-factures') ?>">Retour à mes factures</a>
-            <form method="post" action="<?= url('facture-supprimer') ?>" data-confirm="Supprimer la facture <?= e($facture->getReference()) ?> ? Cette action est définitive.">
+            <form method="post" action="<?= url('facture-supprimer') ?>" data-confirm="Supprimer la <?= e(lcfirst($titre)) ?> ? Cette action est définitive.">
               <?= csrfField() ?>
               <input type="hidden" name="id_facture" value="<?= $id ?>">
               <button class="btn btn--outline bill-btn-danger" type="submit"><span data-icon="trash"></span> Supprimer</button>
@@ -64,7 +66,7 @@ $jours = (int) $debut->diff($fin)->days;
   </main>
 <?php
 $content     = ob_get_clean();
-$title       = 'Facture ' . $facture->getReference() . ' — WASLA';
+$title       = $titre . ' — WASLA';
 $description = 'Détail d\'une facture STEG / SONEDE.';
 $currentPage = 'mes-factures';
 $pageCss     = ['pages', 'services', 'factures'];

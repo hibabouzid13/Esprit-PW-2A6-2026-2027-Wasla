@@ -22,11 +22,10 @@ class FactureController extends Controller
 {
     /**
      * Règles de base (mêmes noms que data-rules dans les formulaires).
-     * Les règles propres aux factures (format, unités, durées…) sont dans check().
+     * Les règles propres aux factures (références, unités, durées…) sont dans check().
      */
     private const RULES = [
         'type_ressource' => 'required|in:electricite,eau',
-        'reference'      => 'required|max:30',
         'periode_debut'  => 'required|date',
         'periode_fin'    => 'required|date',
         'quantite'       => 'required|max:20',
@@ -47,8 +46,19 @@ class FactureController extends Controller
     private const MONTANT_MAX = 99999.999;
     private const QUANTITE_MAX = 999999.99;
 
-    /** Préfixe obligatoire de la référence : STG-123… (STEG) ou SND-123… (SONEDE). */
-    public const PREFIXES = ['electricite' => 'STG', 'eau' => 'SND'];
+    /**
+     * Les deux références d'une facture, selon le fournisseur (chiffres uniquement, espaces retirés) :
+     *  - abonnement (en haut de la facture) : obligatoire ;
+     *  - paiement / talon (en bas de la facture) : facultative, mais au bon format si elle est saisie.
+     * [longueur min, longueur max] — les mêmes valeurs sont dans factures-crud.js.
+     */
+    public const REFERENCES = [
+        'electricite' => ['abonnement' => [9, 9], 'paiement' => [16, 16]],
+        'eau'         => ['abonnement' => [8, 9], 'paiement' => [12, 16]],
+    ];
+
+    /** Longueur maximale de saisie (identique pour les deux fournisseurs). */
+    public const REFERENCE_MAX = ['reference_abonnement' => 9, 'reference_paiement' => 16];
 
     /** Aucune facture avant cette date (évite les erreurs de saisie). */
     public const DATE_MIN = '2016-01-01';
@@ -131,15 +141,19 @@ class FactureController extends Controller
                 WHERE 1 = 1" . $this->scopeSql($scope, $params);
 
         if ($filters['q'] !== '') {
-            // Recherche par référence (et par citoyen pour le Back Office)
-            $sql .= isset($scope['user'])
-                ? ' AND f.reference LIKE :q1'
-                : " AND (f.reference LIKE :q1 OR u.email LIKE :q2 OR CONCAT(u.prenom, ' ', u.nom) LIKE :q3)";
-            $like = '%' . addcslashes($filters['q'], '%_\\') . '%';
-            $params['q1'] = $like;
-            if (!isset($scope['user'])) {
-                $params['q2'] = $like;
+            // Recherche dans les deux références (et par citoyen pour le Back Office).
+            // Les références sont enregistrées sans espaces : on les retire aussi de la recherche.
+            $refLike = '%' . addcslashes((string) preg_replace('/\s+/u', '', $filters['q']), '%_\\') . '%';
+            $params['q1'] = $refLike;
+            $params['q2'] = $refLike;
+            if (isset($scope['user'])) {
+                $sql .= ' AND (f.reference_abonnement LIKE :q1 OR f.reference_paiement LIKE :q2)';
+            } else {
+                $sql .= " AND (f.reference_abonnement LIKE :q1 OR f.reference_paiement LIKE :q2
+                               OR u.email LIKE :q3 OR CONCAT(u.prenom, ' ', u.nom) LIKE :q4)";
+                $like = '%' . addcslashes($filters['q'], '%_\\') . '%';
                 $params['q3'] = $like;
+                $params['q4'] = $like;
             }
         }
         if ($filters['type'] !== '') {
@@ -222,17 +236,13 @@ class FactureController extends Controller
      */
     public function check(array $post, int $idUtilisateur, ?int $exclureId = null): array
     {
+        $post = self::normaliserReferences($post);
         $errors = $this->validate($post, self::RULES);
         $v = fn (string $k): string => trim((string) ($post[$k] ?? ''));
         $type = isset($errors['type_ressource']) ? '' : $v('type_ressource');
 
-        // ---- Référence : STG-chiffres (STEG) ou SND-chiffres (SONEDE)
-        if (!isset($errors['reference'])) {
-            $message = self::referenceError(mb_strtoupper($v('reference')), $type);
-            if ($message !== null) {
-                $errors['reference'] = $message;
-            }
-        }
+        // ---- Références d'abonnement et de paiement (format selon le fournisseur)
+        $errors += self::referencesErrors($v('reference_abonnement'), $v('reference_paiement'), $type);
 
         // ---- Consommation et montant : un nombre réel, avec ou sans l'unité
         if (!isset($errors['quantite'])) {
@@ -255,41 +265,71 @@ class FactureController extends Controller
             }
         }
 
-        // ---- Base de données : référence déjà utilisée, période qui chevauche une autre facture
-        if ($type !== '' && !isset($errors['reference'])
-            && $this->referenceExists($idUtilisateur, $type, mb_strtoupper($v('reference')), $exclureId)) {
-            $errors['reference'] = 'Cette référence est déjà enregistrée pour une autre facture.';
+        // ---- Base de données : talon déjà enregistré, période qui chevauche une autre facture
+        if ($type !== '' && $v('reference_paiement') !== '' && !isset($errors['reference_paiement'])
+            && $this->paiementExists($idUtilisateur, $type, $v('reference_paiement'), $exclureId)) {
+            $errors['reference_paiement'] = 'Vous avez déjà enregistré une facture avec cette référence de paiement.';
         }
         if ($type !== '' && !isset($errors['periode_debut']) && !isset($errors['periode_fin'])) {
             $autre = $this->chevauchement($idUtilisateur, $type, $v('periode_debut'), $v('periode_fin'), $exclureId);
             if ($autre !== null) {
                 $errors['periode_debut'] = sprintf(
-                    'Cette période chevauche la facture %s (du %s au %s) déjà enregistrée pour la %s.',
-                    $autre['reference'], dateFr($autre['periode_debut']), dateFr($autre['periode_fin']),
-                    self::DUREES[$type]['nom']
+                    'Cette période chevauche une autre facture %s déjà enregistrée (du %s au %s, abonnement %s).',
+                    self::DUREES[$type]['nom'], dateFr($autre['periode_debut']), dateFr($autre['periode_fin']),
+                    $autre['reference_abonnement']
                 );
             }
         }
         return $errors;
     }
 
-    /** Message d'erreur de la référence, ou null si elle est correcte. */
-    public static function referenceError(string $reference, string $type): ?string
+    /** Retire tous les espaces des deux références (« 93797 480 0 » → « 937974800 »). */
+    public static function normaliserReferences(array $post): array
     {
-        if (!preg_match('/^(STG|SND)-\d{1,20}$/', $reference)) {
-            return match ($type) {
-                'electricite' => 'Format attendu : STG- suivi de chiffres uniquement (ex. STG-20260918).',
-                'eau'         => 'Format attendu : SND- suivi de chiffres uniquement (ex. SND-20260930).',
-                default       => 'Format attendu : STG-chiffres (STEG) ou SND-chiffres (SONEDE).',
-            };
+        foreach (array_keys(self::REFERENCE_MAX) as $champ) {
+            $post[$champ] = preg_replace('/\s+/u', '', (string) ($post[$champ] ?? '')) ?? '';
         }
-        $prefixe = substr($reference, 0, 3);
-        if ($type !== '' && $prefixe !== self::PREFIXES[$type]) {
-            return $type === 'electricite'
-                ? 'Une facture STEG commence par STG- (SND- est réservé aux factures SONEDE).'
-                : 'Une facture SONEDE commence par SND- (STG- est réservé aux factures STEG).';
+        return $post;
+    }
+
+    /**
+     * Erreurs des deux références (déjà sans espaces) selon le fournisseur.
+     * @return array<string, string>
+     */
+    public static function referencesErrors(string $abonnement, string $paiement, string $type): array
+    {
+        $messages = [
+            'electricite' => [
+                'reference_abonnement' => "La référence d'abonnement STEG doit contenir exactement 9 chiffres.",
+                'reference_paiement'   => 'La référence de paiement STEG (talon) doit contenir exactement 16 chiffres.',
+            ],
+            'eau' => [
+                'reference_abonnement' => "La référence d'abonnement SONEDE (district + police) doit contenir entre 8 et 9 chiffres.",
+                'reference_paiement'   => 'La référence de paiement SONEDE (talon) doit contenir entre 12 et 16 chiffres.',
+            ],
+        ];
+        $errors = [];
+        if ($abonnement === '') {
+            $errors['reference_abonnement'] = "Indiquez la référence d'abonnement (en haut de la facture).";
         }
-        return null;
+        $valeurs = ['reference_abonnement' => [$abonnement, 'abonnement'], 'reference_paiement' => [$paiement, 'paiement']];
+        foreach ($valeurs as $champ => [$valeur, $cle]) {
+            if ($valeur === '' || isset($errors[$champ])) {
+                continue;
+            }
+            if ($type === '') {
+                // Fournisseur pas encore choisi : seulement « chiffres » et longueur maximale
+                if (!preg_match('/^\d{1,' . self::REFERENCE_MAX[$champ] . '}$/', $valeur)) {
+                    $errors[$champ] = sprintf('Chiffres uniquement (%d au plus).', self::REFERENCE_MAX[$champ]);
+                }
+                continue;
+            }
+            [$min, $max] = self::REFERENCES[$type][$cle];
+            if (!preg_match('/^\d{' . $min . ',' . $max . '}$/', $valeur)) {
+                $errors[$champ] = $messages[$type][$champ];
+            }
+        }
+        return $errors;
     }
 
     /**
@@ -394,24 +434,25 @@ class FactureController extends Controller
         return $errors;
     }
 
-    private function referenceExists(int $idUtilisateur, string $type, string $reference, ?int $exclureId): bool
+    /** Le citoyen a-t-il déjà une facture de ce fournisseur avec ce talon ? */
+    private function paiementExists(int $idUtilisateur, string $type, string $paiement, ?int $exclureId): bool
     {
         $stmt = $this->db->prepare(
-            'SELECT 1 FROM facture WHERE id_utilisateur = :u AND type_ressource = :t AND reference = :r AND id_facture <> :x LIMIT 1'
+            'SELECT 1 FROM facture WHERE id_utilisateur = :u AND type_ressource = :t AND reference_paiement = :r AND id_facture <> :x LIMIT 1'
         );
-        $stmt->execute(['u' => $idUtilisateur, 't' => $type, 'r' => $reference, 'x' => $exclureId ?? 0]);
+        $stmt->execute(['u' => $idUtilisateur, 't' => $type, 'r' => $paiement, 'x' => $exclureId ?? 0]);
         return (bool) $stmt->fetchColumn();
     }
 
     /**
      * Facture du même fournisseur et du même titulaire dont la période chevauche [début, fin].
      * Deux périodes qui se suivent (l'une finit le jour où l'autre commence) ne se chevauchent pas.
-     * @return array{reference: string, periode_debut: string, periode_fin: string}|null
+     * @return array{reference_abonnement: string, periode_debut: string, periode_fin: string}|null
      */
     private function chevauchement(int $idUtilisateur, string $type, string $debut, string $fin, ?int $exclureId): ?array
     {
         $stmt = $this->db->prepare(
-            'SELECT reference, periode_debut, periode_fin FROM facture
+            'SELECT reference_abonnement, periode_debut, periode_fin FROM facture
              WHERE id_utilisateur = :u AND type_ressource = :t AND id_facture <> :x
                AND periode_debut < :fin AND periode_fin > :debut
              ORDER BY periode_debut LIMIT 1'
@@ -433,7 +474,9 @@ class FactureController extends Controller
         $f = new FactureModel();
         $f->setIdUtilisateur($idUtilisateur);
         $f->setTypeRessource(trim((string) $post['type_ressource']));
-        $f->setReference(mb_strtoupper(trim((string) $post['reference'])));
+        $f->setReferenceAbonnement((string) $post['reference_abonnement']);
+        $paiement = (string) ($post['reference_paiement'] ?? '');
+        $f->setReferencePaiement($paiement !== '' ? $paiement : null);   // jamais de chaîne vide en base
         $f->setPeriodeDebut(trim((string) $post['periode_debut']));
         $f->setPeriodeFin(trim((string) $post['periode_fin']));
         $f->setQuantite($this->toFloat(trim((string) $post['quantite'])));
@@ -457,19 +500,20 @@ class FactureController extends Controller
         if (isset($scope['type']) && ($post['type_ressource'] ?? '') !== $scope['type']) {
             return ['type_ressource' => 'Vous ne pouvez gérer que les factures ' . self::typeLabel($scope['type']) . '.'];
         }
-        $post['reference'] = mb_strtoupper(trim((string) ($post['reference'] ?? '')));
+        $post = self::normaliserReferences($post);
         $errors = $this->check($post, $idUtilisateur);
         if ($errors !== []) {
             return $errors;
         }
         $f = $this->fromPost($post, $idUtilisateur);
         $stmt = $this->db->prepare(
-            'INSERT INTO facture (id_utilisateur, type_ressource, reference, periode_debut, periode_fin,
-                                  quantite, montant, date_echeance, statut, source)
-             VALUES (:u, :t, :r, :pd, :pf, :q, :m, :e, :s, :src)'
+            'INSERT INTO facture (id_utilisateur, type_ressource, reference_abonnement, reference_paiement,
+                                  periode_debut, periode_fin, quantite, montant, date_echeance, statut, source)
+             VALUES (:u, :t, :ra, :rp, :pd, :pf, :q, :m, :e, :s, :src)'
         );
         $stmt->execute([
-            'u' => $f->getIdUtilisateur(), 't' => $f->getTypeRessource(), 'r' => $f->getReference(),
+            'u' => $f->getIdUtilisateur(), 't' => $f->getTypeRessource(),
+            'ra' => $f->getReferenceAbonnement(), 'rp' => $f->getReferencePaiement(),
             'pd' => $f->getPeriodeDebut(), 'pf' => $f->getPeriodeFin(), 'q' => $f->getQuantite(),
             'm' => $f->getMontant(), 'e' => $f->getDateEcheance(), 's' => $f->getStatut(), 'src' => 'manuelle',
         ]);
@@ -488,18 +532,20 @@ class FactureController extends Controller
         if (isset($scope['type']) && ($post['type_ressource'] ?? '') !== $scope['type']) {
             return ['type_ressource' => 'Vous ne pouvez gérer que les factures ' . self::typeLabel($scope['type']) . '.'];
         }
-        $post['reference'] = mb_strtoupper(trim((string) ($post['reference'] ?? '')));
+        $post = self::normaliserReferences($post);
         $errors = $this->check($post, $existante->getIdUtilisateur(), $id);
         if ($errors !== []) {
             return $errors;
         }
         $f = $this->fromPost($post, $existante->getIdUtilisateur());
         $params = [
-            'id' => $id, 't' => $f->getTypeRessource(), 'r' => $f->getReference(),
+            'id' => $id, 't' => $f->getTypeRessource(),
+            'ra' => $f->getReferenceAbonnement(), 'rp' => $f->getReferencePaiement(),
             'pd' => $f->getPeriodeDebut(), 'pf' => $f->getPeriodeFin(), 'q' => $f->getQuantite(),
             'm' => $f->getMontant(), 'e' => $f->getDateEcheance(), 's' => $f->getStatut(),
         ];
-        $sql = 'UPDATE facture f SET f.type_ressource = :t, f.reference = :r, f.periode_debut = :pd, f.periode_fin = :pf,
+        $sql = 'UPDATE facture f SET f.type_ressource = :t, f.reference_abonnement = :ra, f.reference_paiement = :rp,
+                       f.periode_debut = :pd, f.periode_fin = :pf,
                        f.quantite = :q, f.montant = :m, f.date_echeance = :e, f.statut = :s
                 WHERE f.id_facture = :id' . $this->scopeSql($scope, $params);
         $stmt = $this->db->prepare($sql);
@@ -526,6 +572,28 @@ class FactureController extends Controller
         return ['electricite' => 'Électricité (STEG)', 'eau' => 'Eau (SONEDE)'][$type] ?? $type;
     }
 
+    /** « STEG » ou « SONEDE ». */
+    public static function fournisseur(string $type): string
+    {
+        return self::DUREES[$type]['nom'] ?? $type;
+    }
+
+    /** Titre lisible d'une facture : « Facture STEG du 01/09/2026 au 31/10/2026 ». */
+    public static function titre(FactureModel $f): string
+    {
+        return sprintf('Facture %s du %s au %s', self::fournisseur($f->getTypeRessource()),
+            dateFr($f->getPeriodeDebut()), dateFr($f->getPeriodeFin()));
+    }
+
+    /**
+     * Référence affichée par groupes de chiffres (lecture plus facile) :
+     * abonnement par 3 (« 937 974 800 »), talon par 4 (« 0000 0499 3797 4800 »).
+     */
+    public static function formatReference(?string $reference, int $groupe = 3): string
+    {
+        return $reference === null || $reference === '' ? '—' : trim(chunk_split($reference, $groupe, ' '));
+    }
+
     public static function unite(string $type): string
     {
         return $type === 'eau' ? 'm³' : 'kWh';
@@ -549,7 +617,7 @@ class FactureController extends Controller
     /** Valeurs d'un formulaire vide (ajout). */
     public static function emptyForm(string $type = ''): array
     {
-        return ['type_ressource' => $type, 'reference' => '', 'periode_debut' => '', 'periode_fin' => '',
+        return ['type_ressource' => $type, 'reference_abonnement' => '', 'reference_paiement' => '', 'periode_debut' => '', 'periode_fin' => '',
                 'quantite' => '', 'montant' => '', 'date_echeance' => '', 'statut' => 'a_payer', 'id_utilisateur' => ''];
     }
 
@@ -558,7 +626,8 @@ class FactureController extends Controller
     {
         return [
             'type_ressource' => $f->getTypeRessource(),
-            'reference'      => $f->getReference(),
+            'reference_abonnement' => $f->getReferenceAbonnement(),
+            'reference_paiement'   => $f->getReferencePaiement() ?? '',
             'periode_debut'  => $f->getPeriodeDebut(),
             'periode_fin'    => $f->getPeriodeFin(),
             'quantite'       => rtrim(rtrim(number_format($f->getQuantite(), 2, '.', ''), '0'), '.'),
@@ -572,6 +641,7 @@ class FactureController extends Controller
     /** Valeurs saisies (pour réafficher le formulaire après une erreur). */
     public static function postedForm(array $post): array
     {
+        $post = self::normaliserReferences($post);   // références réaffichées sans espaces
         $out = [];
         foreach (array_keys(self::emptyForm()) as $k) {
             $out[$k] = trim((string) ($post[$k] ?? ''));

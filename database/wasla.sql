@@ -238,7 +238,8 @@ CREATE TABLE IF NOT EXISTS facture (
     id_facture     INT           NOT NULL AUTO_INCREMENT,
     id_utilisateur INT           NOT NULL,
     type_ressource ENUM('electricite','eau') NOT NULL,   -- électricité = STEG (kWh), eau = SONEDE (m³)
-    reference      VARCHAR(50)   NOT NULL,               -- numéro imprimé sur la facture
+    reference_abonnement VARCHAR(9)  NOT NULL,           -- en haut de la facture : STEG 9 chiffres, SONEDE 8 ou 9
+    reference_paiement   VARCHAR(16) NULL,               -- talon (bas de la facture) : STEG 16 chiffres, SONEDE 12 à 16 ; NULL si non saisie
     periode_debut  DATE          NOT NULL,
     periode_fin    DATE          NOT NULL,
     quantite       DECIMAL(10,2) NOT NULL,               -- kWh ou m³ (unité déduite du type)
@@ -248,8 +249,13 @@ CREATE TABLE IF NOT EXISTS facture (
     source         ENUM('manuelle','import') NOT NULL DEFAULT 'manuelle',
     date_ajout     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id_facture),
-    UNIQUE KEY uq_facture_reference (id_utilisateur, type_ressource, reference),
+    -- Un même talon ne peut être enregistré qu'une fois par citoyen et par fournisseur
+    -- (plusieurs NULL autorisés). Les doublons de facture sont aussi évités par le contrôle
+    -- de chevauchement des périodes (FactureController).
+    UNIQUE KEY uq_facture_paiement (id_utilisateur, type_ressource, reference_paiement),
     KEY idx_facture_user_periode (id_utilisateur, periode_debut),
+    CONSTRAINT chk_facture_ref_abonnement CHECK (reference_abonnement REGEXP '^[0-9]{8,9}$'),
+    CONSTRAINT chk_facture_ref_paiement CHECK (reference_paiement IS NULL OR reference_paiement REGEXP '^[0-9]{12,16}$'),
     CONSTRAINT chk_facture_periode CHECK (periode_fin > periode_debut),
     CONSTRAINT chk_facture_quantite CHECK (quantite >= 0),
     CONSTRAINT chk_facture_montant CHECK (montant > 0),

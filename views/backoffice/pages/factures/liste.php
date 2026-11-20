@@ -55,11 +55,11 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
             <input type="hidden" name="action" value="admin-factures">
             <div class="admin-search">
               <span class="admin-search__icon" data-icon="search"></span>
-              <input type="search" name="q" value="<?= e($filters['q']) ?>" placeholder="Référence, citoyen ou e-mail" aria-label="Rechercher une facture" data-rules="max:50">
+              <input type="search" name="q" value="<?= e($filters['q']) ?>" placeholder="N° d'abonnement ou de talon, citoyen, e-mail" aria-label="Rechercher une facture">
             </div>
 <?php if ($typeImpose === ''): ?>
-            <select class="admin-select" name="type" aria-label="Filtrer par ressource">
-              <option value="">Toutes les ressources</option>
+            <select class="admin-select" name="type" aria-label="Filtrer par fournisseur">
+              <option value="">Tous les fournisseurs</option>
 <?php foreach (FactureModel::TYPES as $t): ?>
               <option value="<?= $t ?>"<?= $filters['type'] === $t ? ' selected' : '' ?>><?= e(FactureController::typeLabel($t)) ?></option>
 <?php endforeach; ?>
@@ -92,9 +92,9 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
               <thead>
                 <tr>
                   <th scope="col">#</th>
-                  <th scope="col">Référence</th>
+                  <th scope="col">Références</th>
                   <th scope="col">Citoyen</th>
-                  <th scope="col">Ressource</th>
+                  <th scope="col">Fournisseur</th>
                   <th scope="col">Période</th>
                   <th scope="col">Consommation</th>
                   <th scope="col">Montant</th>
@@ -106,7 +106,12 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
 <?php foreach ($factures as $f): ?>
                 <tr>
                   <td class="admin-table__id"><?= $f->getIdFacture() ?></td>
-                  <td class="admin-table__main bill-nowrap"><?= e($f->getReference()) ?></td>
+                  <td class="admin-table__main bill-nowrap bill-refs">
+                    <span title="Référence d'abonnement"><?= e(FactureController::formatReference($f->getReferenceAbonnement())) ?></span>
+<?php if ($f->getReferencePaiement() !== null): ?>
+                    <small title="Référence de paiement (talon)">Talon <?= e(FactureController::formatReference($f->getReferencePaiement(), 4)) ?></small>
+<?php endif; ?>
+                  </td>
                   <td class="bill-client"><?= e($f->getNomClient()) ?><small><?= e($f->getEmailClient()) ?></small></td>
                   <td class="bill-nowrap"><span class="admin-badge <?= $f->getTypeRessource() === 'eau' ? 'admin-badge--ok' : 'admin-badge--info' ?>"><?= e(FactureController::typeLabel($f->getTypeRessource())) ?></span></td>
                   <td class="bill-period"><span><?= e(dateFr($f->getPeriodeDebut())) ?></span><span>→ <?= e(dateFr($f->getPeriodeFin())) ?></span></td>
@@ -114,11 +119,11 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
                   <td class="bill-amount"><?= e(FactureController::formatMontant($f->getMontant())) ?></td>
                   <td class="bill-nowrap"><span class="admin-badge <?= $f->getStatut() === 'payee' ? 'admin-badge--muted' : 'admin-badge--warn' ?>"><?= e(FactureController::statutLabel($f->getStatut())) ?></span></td>
                   <td><div class="admin-actions">
-                    <a class="admin-action" href="<?= url('admin-facture-form', ['id' => $f->getIdFacture()]) ?>" aria-label="Modifier la facture <?= e($f->getReference()) ?>"><span data-icon="pencil"></span></a>
-                    <form method="post" action="<?= url('admin-facture-supprimer') ?>" data-confirm="Supprimer la facture <?= e($f->getReference()) ?> de <?= e($f->getNomClient()) ?> ?">
+                    <a class="admin-action" href="<?= url('admin-facture-form', ['id' => $f->getIdFacture()]) ?>" aria-label="Modifier la <?= e(lcfirst(FactureController::titre($f))) ?>"><span data-icon="pencil"></span></a>
+                    <form method="post" action="<?= url('admin-facture-supprimer') ?>" data-confirm="Supprimer la <?= e(lcfirst(FactureController::titre($f))) ?> de <?= e($f->getNomClient()) ?> ?">
                       <?= csrfField() ?>
                       <input type="hidden" name="id_facture" value="<?= $f->getIdFacture() ?>">
-                      <button class="admin-action admin-action--danger" type="submit" aria-label="Supprimer la facture <?= e($f->getReference()) ?>"><span data-icon="trash"></span></button>
+                      <button class="admin-action admin-action--danger" type="submit" aria-label="Supprimer la <?= e(lcfirst(FactureController::titre($f))) ?>"><span data-icon="trash"></span></button>
                     </form>
                   </div></td>
                 </tr>

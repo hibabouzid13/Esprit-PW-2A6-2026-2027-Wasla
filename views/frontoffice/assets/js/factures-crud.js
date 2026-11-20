@@ -2,9 +2,11 @@
    WASLA — Module 2 (Hiba) : CRUD des factures (Front Office et Back Office)
    ---------------------------------------------------------------------
    - Ajoute les icônes utilisées par les pages du CRUD.
-   - Selon la ressource : unité (kWh / m³), exemple et aide de la référence
-     (STG-… pour la STEG, SND-… pour la SONEDE).
-   - Ajoute les contrôles propres aux factures (référence, nombres avec ou sans
+   - Selon le fournisseur : unité (kWh / m³), exemples et aides des deux
+     références (abonnement et paiement / talon).
+   - Références : espaces retirés et chiffres seulement pendant la frappe,
+     longueur limitée en JavaScript (pas d'attribut maxlength : HTML5 interdit).
+   - Ajoute les contrôles propres aux factures (références, nombres avec ou sans
      unité, règles des dates par fournisseur), en plus des règles data-rules de
      validation.js. Les MÊMES contrôles sont refaits en PHP dans
      FactureController::check() ; le chevauchement de périodes n'est vérifié
@@ -15,11 +17,36 @@
   "use strict";
 
   /* Les MÊMES règles que FactureController::check() (PHP). */
-  const PREFIXES = { electricite: "STG", eau: "SND" };
-  const EXEMPLES = {
-    electricite: { ref: "STG-20260918", qte: "455 ou 455 kWh" },
-    eau: { ref: "SND-20260930", qte: "22.5 ou 22.5 m³" }
+  /* Références : [longueur min, longueur max] selon le fournisseur (FactureController::REFERENCES). */
+  const REFERENCES = {
+    electricite: { abonnement: [9, 9], paiement: [16, 16] },
+    eau: { abonnement: [8, 9], paiement: [12, 16] }
   };
+  const REFERENCE_MAX = { reference_abonnement: 9, reference_paiement: 16 };
+  const REFERENCE_MESSAGES = {
+    electricite: {
+      reference_abonnement: "La référence d'abonnement STEG doit contenir exactement 9 chiffres.",
+      reference_paiement: "La référence de paiement STEG (talon) doit contenir exactement 16 chiffres."
+    },
+    eau: {
+      reference_abonnement: "La référence d'abonnement SONEDE (district + police) doit contenir entre 8 et 9 chiffres.",
+      reference_paiement: "La référence de paiement SONEDE (talon) doit contenir entre 12 et 16 chiffres."
+    }
+  };
+  const ABONNEMENT_VIDE = "Indiquez la référence d'abonnement (en haut de la facture).";
+  const EXEMPLES = {
+    electricite: {
+      abonnement: "Ex : 937974800", paiement: "Ex : 0000049937974800 (facultatif)", qte: "455 ou 455 kWh",
+      aideAbonnement: "9 chiffres, en haut de la facture STEG.",
+      aidePaiement: "16 chiffres, sur le talon en bas de la facture."
+    },
+    eau: {
+      abonnement: "Ex : 123456789", paiement: "Ex : 00123456789012 (facultatif)", qte: "22.5 ou 22.5 m³",
+      aideAbonnement: "8 ou 9 chiffres (code district + numéro de police), en haut de la facture SONEDE.",
+      aidePaiement: "12 à 16 chiffres, sur le talon en bas de la facture."
+    }
+  };
+  const SANS_FOURNISSEUR = "Choisissez d'abord le fournisseur";
   const DUREES = {
     electricite: { minJours: 15, maxMois: 12, nom: "STEG", note: "régularisation" },
     eau: { minJours: 15, maxMois: 6, nom: "SONEDE", note: "plafond réglementaire" }
@@ -43,18 +70,25 @@
     return Math.round((Date.UTC(y.getFullYear(), y.getMonth(), y.getDate()) - Date.UTC(x.getFullYear(), x.getMonth(), x.getDate())) / 86400000);
   };
 
-  function referenceError(ref, type) {
-    if (!/^(STG|SND)-\d{1,20}$/.test(ref)) {
-      if (type === "electricite") return "Format attendu : STG- suivi de chiffres uniquement (ex. STG-20260918).";
-      if (type === "eau") return "Format attendu : SND- suivi de chiffres uniquement (ex. SND-20260930).";
-      return "Format attendu : STG-chiffres (STEG) ou SND-chiffres (SONEDE).";
-    }
-    if (type && ref.slice(0, 3) !== PREFIXES[type]) {
-      return type === "electricite"
-        ? "Une facture STEG commence par STG- (SND- est réservé aux factures SONEDE)."
-        : "Une facture SONEDE commence par SND- (STG- est réservé aux factures STEG).";
-    }
-    return "";
+  /** Espaces retirés : « 93797 480 0 » → « 937974800 » (comme FactureController::normaliserReferences). */
+  const sansEspaces = (value) => String(value).replace(/\s+/g, "");
+
+  /** Même logique que FactureController::referencesErrors() : { champ: message }. */
+  function referencesErrors(abonnement, paiement, type) {
+    const errors = {};
+    if (abonnement === "") errors.reference_abonnement = ABONNEMENT_VIDE;
+    [["reference_abonnement", abonnement, "abonnement"], ["reference_paiement", paiement, "paiement"]].forEach(([champ, valeur, cle]) => {
+      if (valeur === "" || errors[champ]) return;
+      if (!type) {
+        if (!new RegExp(`^\\d{1,${REFERENCE_MAX[champ]}}$`).test(valeur)) {
+          errors[champ] = `Chiffres uniquement (${REFERENCE_MAX[champ]} au plus).`;
+        }
+        return;
+      }
+      const [min, max] = REFERENCES[type][cle];
+      if (!new RegExp(`^\\d{${min},${max}}$`).test(valeur)) errors[champ] = REFERENCE_MESSAGES[type][champ];
+    });
+    return errors;
   }
 
   /* « 22.5 », « 22,5 m³ », « 500TND »… → { n, unit } ; null si ce n'est pas un réel (+ unité). */
@@ -123,12 +157,8 @@
       const el = form.querySelector(`[name="${name}"]`);
       return el ? String(el.value).trim() : "";
     };
-    const type = PREFIXES[v("type_ressource")] ? v("type_ressource") : "";
-    const errors = {};
-    if (v("reference")) {
-      const m = referenceError(v("reference").toUpperCase(), type);
-      if (m) errors.reference = m;
-    }
+    const type = REFERENCES[v("type_ressource")] ? v("type_ressource") : "";
+    const errors = referencesErrors(sansEspaces(v("reference_abonnement")), sansEspaces(v("reference_paiement")), type);
     if (v("quantite")) {
       const m = quantiteError(v("quantite"), type);
       if (m) errors.quantite = m;
@@ -140,38 +170,54 @@
     return Object.assign(errors, dateErrors(v("periode_debut"), v("periode_fin"), v("date_echeance"), type, today()));
   }
 
-  /* Unité, placeholder et aide de la référence selon la ressource choisie. */
+  /* Unité, placeholders et aides des références selon le fournisseur choisi. */
   function setupType(form) {
     // Par le NOM : dans le formulaire STEG/SONEDE, un champ caché porte name="type_ressource"
     // et un champ en lecture seule porte id="type_ressource" (form.elements renverrait les deux).
     const field = form.querySelector('[name="type_ressource"]');
     if (!field) return;
     const unit = form.querySelector("[data-bill-unit]");
-    const ref = form.querySelector('[name="reference"]');
-    const refHint = form.querySelector("[data-bill-ref-hint]");
+    const abo = form.querySelector('[name="reference_abonnement"]');
+    const paie = form.querySelector('[name="reference_paiement"]');
+    const aboHint = form.querySelector("[data-bill-abo-hint]");
+    const paieHint = form.querySelector("[data-bill-paie-hint]");
     const qte = form.querySelector('[name="quantite"]');
     const update = () => {
-      const type = PREFIXES[field.value] ? field.value : "";
+      const type = REFERENCES[field.value] ? field.value : "";
+      const ex = type ? EXEMPLES[type] : null;
       if (unit) unit.textContent = type === "eau" ? "m³" : "kWh";
-      if (ref) ref.placeholder = type ? `ex. ${EXEMPLES[type].ref}` : "Choisissez d'abord la ressource";
-      if (refHint) {
-        refHint.textContent = type
-          ? `Format : ${PREFIXES[type]}- suivi de chiffres (ex. ${EXEMPLES[type].ref}).`
-          : "STG-chiffres pour la STEG, SND-chiffres pour la SONEDE.";
-      }
+      if (abo) abo.placeholder = ex ? ex.abonnement : SANS_FOURNISSEUR;
+      if (paie) paie.placeholder = ex ? ex.paiement : SANS_FOURNISSEUR;
+      if (aboHint) aboHint.textContent = ex ? ex.aideAbonnement : "Choisissez le fournisseur pour voir le format attendu.";
+      if (paieHint) paieHint.textContent = ex ? ex.aidePaiement : "Facultatif : talon en bas de la facture.";
       if (qte) qte.placeholder = `ex. ${type === "eau" ? EXEMPLES.eau.qte : EXEMPLES.electricite.qte}`;
     };
     field.addEventListener("change", update);
     update();
   }
 
+  /* Pendant la frappe (ou un collage) : espaces et caractères non numériques retirés, longueur limitée. */
+  function setupReferenceInputs(form) {
+    Object.keys(REFERENCE_MAX).forEach((name) => {
+      const el = form.querySelector(`[name="${name}"]`);
+      if (!el) return;
+      const filtrer = () => {
+        const propre = el.value.replace(/\D+/g, "").slice(0, REFERENCE_MAX[name]);
+        if (propre !== el.value) el.value = propre;
+      };
+      el.addEventListener("input", filtrer);
+      filtrer();
+    });
+  }
+
   function setupBusinessChecks(form) {
     const api = window.WASLA_validate;
     if (!api) return;
     const submit = form.querySelector('[type="submit"]');
-    const label = submit ? submit.textContent : "";
+    // innerHTML (et non textContent) : garde l'icône du bouton quand on le remet en état
+    const label = submit ? submit.innerHTML : "";
     const field = (name) => form.querySelector(`[name="${name}"]:not([type="hidden"])`) || form.querySelector(`[name="${name}"]`);
-    const champs = ["reference", "quantite", "montant", "periode_debut", "periode_fin", "date_echeance"];
+    const champs = ["reference_abonnement", "reference_paiement", "quantite", "montant", "periode_debut", "periode_fin", "date_echeance"];
 
     /* Affiche les erreurs « facture » sur les champs que validation.js n'a pas déjà signalés. */
     const apply = (names) => {
@@ -212,7 +258,7 @@
       else if (window.WASLA_adminToast) window.WASLA_adminToast("Veuillez corriger les champs indiqués.");
       if (submit) {                                // validation.js avait mis le bouton en « Enregistrement… »
         submit.disabled = false;
-        submit.textContent = label;
+        submit.innerHTML = label;
       }
     });
   }
@@ -241,7 +287,11 @@
   window.addEventListener("load", () => {
     document.querySelectorAll("form[data-bill-crud-form]").forEach((form) => {
       setupType(form);
+      setupReferenceInputs(form);
       setupBusinessChecks(form);
     });
   });
+
+  // Réutilisé par la fenêtre « Ajouter une facture » de Factures & IA
+  window.WASLA_factures = { businessErrors };
 })();
