@@ -24,7 +24,7 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
             <p>Enregistrez vos factures STEG et SONEDE, suivez ce qu'il reste à payer et retrouvez chaque facture en quelques secondes.</p>
           </div>
           <div class="page-hero__actions">
-            <a class="btn btn--outline" href="<?= url('factures') ?>"><span data-icon="sparkles"></span> Factures &amp; IA (démo)</a>
+            <a class="btn btn--outline" href="<?= url('factures') ?>"><span data-icon="sparkles"></span> Factures &amp; IA</a>
             <a class="btn btn--primary" href="<?= url('facture-ajouter') ?>"><span data-icon="plus"></span> Ajouter une facture</a>
           </div>
         </div>
@@ -131,20 +131,20 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
               <tbody>
 <?php foreach ($factures as $f): ?>
                 <tr>
-                  <td><span class="svc-tag <?= $f->getTypeRessource() === 'eau' ? 'svc-tag--green' : 'svc-tag--blue' ?>"><?= e(FactureController::typeLabel($f->getTypeRessource())) ?></span></td>
-                  <td class="bill-refs" data-no-i18n>
+                  <td data-label="Fournisseur"><span class="svc-tag <?= $f->getTypeRessource() === 'eau' ? 'svc-tag--green' : 'svc-tag--blue' ?>"><?= e(FactureController::typeLabel($f->getTypeRessource())) ?></span></td>
+                  <td class="bill-refs" data-label="Références" data-no-i18n>
                     <strong title="Référence d'abonnement"><?= e(FactureController::formatReference($f->getReferenceAbonnement())) ?></strong>
 <?php if ($f->getReferencePaiement() !== null): ?>
                     <small title="Référence de paiement (talon)">Talon <?= e(FactureController::formatReference($f->getReferencePaiement(), 4)) ?></small>
 <?php endif; ?>
                   </td>
-                  <td><?= e(dateFr($f->getPeriodeDebut())) ?> → <?= e(dateFr($f->getPeriodeFin())) ?></td>
-                  <td><?= e(FactureController::formatQuantite($f->getQuantite(), $f->getTypeRessource())) ?></td>
-                  <td><strong><?= e(FactureController::formatMontant($f->getMontant())) ?></strong></td>
-                  <td><?= e(dateFr($f->getDateEcheance())) ?></td>
-                  <td><span class="svc-tag <?= $f->getStatut() === 'payee' ? 'svc-tag--green' : 'svc-tag--demo' ?>"><?= e(FactureController::statutLabel($f->getStatut())) ?></span></td>
-                  <td>
-                    <div class="svc-actions">
+                  <td data-label="Période"><?= e(dateFr($f->getPeriodeDebut())) ?> → <?= e(dateFr($f->getPeriodeFin())) ?></td>
+                  <td data-label="Consommation"><?= e(FactureController::formatQuantite($f->getQuantite(), $f->getTypeRessource())) ?></td>
+                  <td data-label="Montant"><strong><?= e(FactureController::formatMontant($f->getMontant())) ?></strong></td>
+                  <td data-label="Échéance"><?= e(dateFr($f->getDateEcheance())) ?></td>
+                  <td data-label="Statut"><span class="svc-tag <?= $f->getStatut() === 'payee' ? 'svc-tag--green' : 'svc-tag--demo' ?>"><?= e(FactureController::statutLabel($f->getStatut())) ?></span></td>
+                  <td class="svc-table__actions">
+                    <div class="svc-actions bill-row-actions">
                       <a class="svc-icon-btn" href="<?= url('facture-voir', ['id' => $f->getIdFacture()]) ?>" aria-label="Voir la <?= e(lcfirst(FactureController::titre($f))) ?>" title="Voir"><span data-icon="eye"></span></a>
                       <form method="post" action="<?= url('facture-supprimer') ?>" data-confirm="Supprimer la <?= e(lcfirst(FactureController::titre($f))) ?> ? Cette action est définitive.">
                         <?= csrfField() ?>
