@@ -88,10 +88,16 @@
   border-top: 1px solid var(--color-border);
 }
 .bill-detail__actions form { margin: 0; }
+.bill-detail__amount { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bill-detail__grid dd .text-muted { font-weight: 400; }
 .bill-btn-danger { color: var(--color-outage); border-color: currentColor; }
 .bill-btn-danger:hover { background: var(--color-outage); color: #fff; }
 @media (max-width: 640px) {
+  .bill-detail { padding: 20px 18px; }
+  .bill-detail__head { flex-wrap: wrap; }
+  .bill-detail__amount { font-size: 24px; }
   .bill-detail__grid { grid-template-columns: 1fr; }
+  .bill-detail__actions form { flex: 1 1 100%; display: flex; }
   .bill-detail__actions .btn { flex: 1 1 100%; justify-content: center; }
 }
 
