@@ -109,7 +109,7 @@ $errors = [];
               </div>
               <button class="text-link" type="button" data-goto-tab="bills">Toutes mes factures <span data-icon="arrow-right"></span></button>
             </div>
-            <div class="table-wrap"><table class="data-table svc-table" data-recent-table></table></div>
+            <div class="table-wrap bill-table-wrap"><table class="data-table svc-table bill-list-table" data-recent-table></table></div>
           </article>
         </div>
 
@@ -131,7 +131,7 @@ $errors = [];
                 <button class="btn btn--primary btn--sm" type="button" data-svc-open="bill-modal"><span data-icon="plus"></span>Ajouter</button>
               </div>
             </div>
-            <div class="table-wrap"><table class="data-table svc-table" data-bill-table></table></div>
+            <div class="table-wrap bill-table-wrap"><table class="data-table svc-table bill-list-table" data-bill-table></table></div>
           </article>
         </div>
 

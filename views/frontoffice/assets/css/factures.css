@@ -78,8 +78,12 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
-  .bill-list-table td.svc-table__actions { align-self: end; }
+  .bill-list-table td.svc-table__actions { grid-column-end: -1; align-self: end; justify-self: end; }
 }
+
+/* Factures & IA : le graphique « Dépenses par facture » (viewBox 360 × 250) est prévu pour une demi-largeur ;
+   quand la grille passe sur une colonne, on limite sa largeur pour que le texte ne double pas de taille. */
+[data-spend-chart] .chart-svg { display: block; max-width: 480px; margin-inline: auto; }
 
 @media (max-width: 1180px) {
   .bill-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
