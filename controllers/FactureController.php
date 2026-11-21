@@ -614,6 +614,29 @@ class FactureController extends Controller
         return number_format($quantite, 2, ',', ' ') . ' ' . self::unite($type);
     }
 
+    /**
+     * Données d'une facture pour le JavaScript de « Factures & IA » (graphiques, analyse, assistant).
+     * Passées dans un attribut data-* (JSON échappé par e() dans la vue) : aucun script en ligne (CSP).
+     */
+    public static function pourJs(FactureModel $f): array
+    {
+        return [
+            'id'          => $f->getIdFacture(),
+            'type'        => $f->getTypeRessource(),
+            'provider'    => self::fournisseur($f->getTypeRessource()),
+            'refAbo'      => $f->getReferenceAbonnement(),
+            'refPaie'     => $f->getReferencePaiement() ?? '',
+            'periodStart' => $f->getPeriodeDebut(),
+            'periodEnd'   => $f->getPeriodeFin(),
+            'quantity'    => $f->getQuantite(),
+            'amount'      => $f->getMontant(),
+            'dueDate'     => $f->getDateEcheance() ?? '',
+            'status'      => $f->getStatut(),
+            'urlVoir'     => url('facture-voir', ['id' => $f->getIdFacture()]),
+            'urlModifier' => url('facture-modifier', ['id' => $f->getIdFacture()]),
+        ];
+    }
+
     /** Valeurs d'un formulaire vide (ajout). */
     public static function emptyForm(string $type = ''): array
     {

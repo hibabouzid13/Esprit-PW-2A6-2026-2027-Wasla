@@ -94,3 +94,55 @@
   .bill-detail__grid { grid-template-columns: 1fr; }
   .bill-detail__actions .btn { flex: 1 1 100%; justify-content: center; }
 }
+
+/* ---------- Libellé « Statut » (fieldset) : même style que les autres libellés ---------- */
+.bill-form .svc-fieldset legend,
+.bill-modal-form .svc-fieldset legend {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-heading);
+}
+
+/* ---------- Factures & IA (remplace les anciens styles en ligne) ---------- */
+.bill-empty-card { padding: 12px; }
+.bill-empty-card .empty-state .btn { margin-top: 6px; }
+.bill-empty-card .svc-icon { width: 48px; height: 48px; }
+.bill-filter-select { width: auto; min-height: 38px; padding-block: 7px; font-size: 13px; }
+.bill-row-sub { display: block; margin-top: 2px; font-size: 11.5px; color: var(--color-text-secondary); }
+.bill-row-actions { justify-content: flex-end; }
+.bill-num { text-align: end; white-space: nowrap; }
+.bill-hint { margin-top: 10px; }
+.bill-flat { margin: 0; }
+.bill-tag-gap { margin-inline-end: 6px; }
+.bill-compare { display: grid; gap: 12px; }
+.bill-compare__row { display: grid; gap: 5px; }
+.bill-compare__label { min-width: 140px; color: var(--color-heading); font-weight: 700; }
+.bill-chat-head { display: flex; align-items: center; gap: 11px; }
+.bill-chat-title { font-size: 16px; }
+.bill-aside-title { font-size: 15px; }
+.bill-aside-hint { margin-top: 14px; }
+.bill-modal__actions { justify-content: flex-end; }
+@media (max-width: 560px) {
+  .bill-compare__label { min-width: 0; }
+  .bill-modal__actions .btn { flex: 1 1 auto; justify-content: center; }
+}
+
+/* Champs côte à côte : alignés en haut, même si une aide ou une erreur allonge l'un d'eux */
+.bill-modal-form .form-row { align-items: start; }
+
+/* Lien du bandeau d'information */
+[data-service="factures"] .svc-notice a { font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+
+/* Mobile : pages.css (commun) masque les colonnes 4 et 5 de tous les .data-table sous 640 px.
+   Dans les tableaux « cartes » du module (svc-table), Montant et Variation doivent rester visibles. */
+@media (max-width: 640px) {
+  .data-table.svc-table td:nth-child(4),
+  .data-table.svc-table td:nth-child(5) { display: block; }
+}
+
+/* Mobile : les 4 onglets de Factures & IA tiennent sur la largeur */
+@media (max-width: 480px) {
+  [data-service="factures"] .tabs.svc-tabs .tab { padding-inline: 9px; font-size: 12px; }
+}

@@ -24,9 +24,37 @@ return [
     'analyses' => function (): void {
         require __DIR__ . '/../views/frontoffice/pages/factures/analyses.php';
     },
-    // Service « Factures & IA » (démonstration, données dans le navigateur)
+    // Service « Factures & IA » : graphiques, analyse et assistant calculés sur les
+    // factures du citoyen connecté (base de données uniquement, aucune donnée de démonstration)
     'factures' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        $user = AuthController::currentUser();
+        $factures = (new FactureController())->search(FactureController::scopeFor($user), FactureController::cleanFilters([]));
+        $bills = array_map(fn (FactureModel $f) => FactureController::pourJs($f), $factures);
+        $old = FactureController::emptyForm();
         require __DIR__ . '/../views/frontoffice/pages/factures/factures-ia.php';
+    },
+
+    // Ajout depuis la fenêtre « Ajouter une facture » de Factures & IA (fetch, réponse JSON).
+    // Même contrôle que facture-ajouter : FactureController::create() ; jeton CSRF vérifié par index.php.
+    'facture-ajouter-json' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        header('Content-Type: application/json; charset=utf-8');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['ok' => false, 'errors' => ['form' => 'Méthode non autorisée.']], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        $user = AuthController::currentUser();
+        $errors = (new FactureController())->create($_POST, $user->getIdUtilisateur(), FactureController::scopeFor($user));
+        if ($errors === []) {
+            AuthController::flash('success', 'Facture ajoutée.');
+            echo json_encode(['ok' => true, 'redirect' => url('factures', ['onglet' => 'bills'])], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        } else {
+            // 200 + ok:false : erreurs de saisie normales (affichées sous les champs par factures.js)
+            echo json_encode(['ok' => false, 'errors' => $errors], JSON_UNESCAPED_UNICODE);
+        }
+        exit;
     },
 
     // =================================================================
@@ -115,7 +143,9 @@ return [
             $ok = (new FactureController())->delete((int) ($_POST['id_facture'] ?? 0), $scope);
             AuthController::flash($ok ? 'success' : 'error', $ok ? 'Facture supprimée.' : 'Facture introuvable.');
         }
-        header('Location: ' . url('mes-factures'));
+        // Retour vers la page d'origine (liste blanche : jamais une adresse fournie telle quelle)
+        $retour = ($_POST['retour'] ?? '') === 'factures' ? url('factures', ['onglet' => 'bills']) : url('mes-factures');
+        header('Location: ' . $retour);
         exit;
     },
 
