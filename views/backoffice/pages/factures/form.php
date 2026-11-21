@@ -20,7 +20,7 @@ $ex = [
 ][$typeCourant] ?? ["Choisissez d'abord le fournisseur", "Choisissez d'abord le fournisseur", 'Choisissez le fournisseur pour voir le format attendu.', 'Facultatif : talon en bas de la facture.'];
 ?>
         <link rel="stylesheet" href="<?= e(asset('css/factures-admin.css', 'backoffice')) ?>">
-        <div class="admin-page-head">
+        <div class="admin-page-head bill-admin-head">
           <div>
             <nav class="admin-breadcrumb" aria-label="Fil d'Ariane">
               <a href="<?= url('dashboard') ?>">Tableau de bord</a><span>/</span><a href="<?= url('admin-factures') ?>">Factures</a><span>/</span><span><?= $edition ? 'Modifier' : 'Ajouter' ?></span>

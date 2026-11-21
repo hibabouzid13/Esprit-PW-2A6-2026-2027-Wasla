@@ -56,6 +56,34 @@ fieldset.admin-field legend {
   padding: 0;
 }
 
+/* En-tête du formulaire : un nom ou un e-mail très long passe à la ligne au lieu d'élargir la page. */
+.bill-admin-head .admin-page-head__title > div {
+  min-width: 0;
+}
+
+.bill-admin-head .admin-page-head__title p {
+  overflow-wrap: anywhere;
+}
+
+/* Fournisseur imposé (STEG / SONEDE) : le champ en lecture seule ne doit pas ressembler à un champ modifiable. */
+.admin-form .admin-input[readonly] {
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  cursor: default;
+}
+
+/* Thème sombre : le choix coché (« À payer » / « Payée ») gardait un texte bleu sur fond bleu, peu lisible. */
+[data-theme="dark"] .admin-form .admin-choice input:checked + span {
+  color: var(--color-heading);
+}
+
+@media (max-width: 720px) {
+  .admin-form .admin-form__actions .admin-btn {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+}
+
 /* Mention « (facultatif) » dans un libellé. */
 .admin-field__optional {
   color: var(--color-text-secondary);
