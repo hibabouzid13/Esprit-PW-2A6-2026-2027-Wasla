@@ -6,7 +6,7 @@
 /* Tableau : plus compact et sans retours à la ligne gênants. */
 .bill-admin-table th,
 .bill-admin-table td {
-  padding-inline: 11px;
+  padding-inline: 9px;
 }
 
 .bill-admin-table .bill-nowrap {
@@ -79,4 +79,96 @@ fieldset.admin-field legend {
 .bill-admin-table th:first-child,
 .bill-admin-table td:first-child {
   padding-inline-start: 20px;
+}
+
+/* Barre de filtres : le champ de recherche prend la place disponible. */
+.bill-admin-toolbar .admin-search {
+  flex: 1 1 260px;
+  max-width: none;
+}
+
+/* Montants des indicateurs : taille adaptée pour rester dans la carte (4 cartes par ligne à 1366 px). */
+.bill-admin-kpis .admin-kpi__value {
+  font-size: clamp(1.15rem, 1.4vw, 1.6rem);
+}
+
+/* Sous 1440 px (barre latérale comprise), les 9 colonnes ne tiennent pas : Montant, Statut et les actions
+   sortaient de l'écran. Chaque facture devient une carte : ligne 1 = n° et actions, puis 4 colonnes. */
+.bill-admin-table .bill-client {
+  min-width: 170px;
+  max-width: 230px;
+}
+
+.bill-admin-table .bill-client small {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1439px) {
+  .bill-admin-table .bill-client {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .bill-admin-table thead {
+    display: none;
+  }
+
+  .bill-admin-table tr {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px 18px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .bill-admin-table td,
+  .bill-admin-table td:first-child {
+    padding: 0;
+    border: 0;
+  }
+
+  .bill-admin-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    color: var(--color-text-secondary);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .bill-admin-table td.admin-table__id {
+    grid-row: 1;
+    grid-column: 1 / -2;
+    align-self: center;
+    font-weight: 700;
+  }
+
+  .bill-admin-table td.admin-table__id::before {
+    display: inline;
+    margin-inline-end: 4px;
+  }
+
+  .bill-admin-table td.bill-admin-actions {
+    grid-row: 1;
+    grid-column: -2 / -1;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 720px) {
+  .bill-admin-toolbar > *,
+  .bill-admin-toolbar .admin-select {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .bill-admin-toolbar .admin-btn {
+    justify-content: center;
+  }
+
+  .bill-admin-table tr {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

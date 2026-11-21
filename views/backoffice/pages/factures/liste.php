@@ -30,7 +30,7 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
           </div>
         </div>
 
-        <section class="admin-kpis" aria-label="Synthèse des factures">
+        <section class="admin-kpis bill-admin-kpis" aria-label="Synthèse des factures">
           <article class="admin-card admin-kpi">
             <span class="admin-kpi__icon" data-icon="file-text"></span>
             <div><p class="admin-kpi__label">Factures</p><p class="admin-kpi__value"><?= $summary['total'] ?></p></div>
@@ -51,7 +51,7 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
 
         <section class="admin-card">
           <!-- Recherche / filtres / tri côté serveur (formulaire GET) -->
-          <form class="admin-toolbar" method="get" action="index.php" role="search">
+          <form class="admin-toolbar bill-admin-toolbar" method="get" action="index.php" role="search">
             <input type="hidden" name="action" value="admin-factures">
             <div class="admin-search">
               <span class="admin-search__icon" data-icon="search"></span>
@@ -105,20 +105,20 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
               <tbody>
 <?php foreach ($factures as $f): ?>
                 <tr>
-                  <td class="admin-table__id"><?= $f->getIdFacture() ?></td>
-                  <td class="admin-table__main bill-nowrap bill-refs">
+                  <td class="admin-table__id" data-label="N°"><?= $f->getIdFacture() ?></td>
+                  <td class="admin-table__main bill-nowrap bill-refs" data-label="Références">
                     <span title="Référence d'abonnement"><?= e(FactureController::formatReference($f->getReferenceAbonnement())) ?></span>
 <?php if ($f->getReferencePaiement() !== null): ?>
                     <small title="Référence de paiement (talon)">Talon <?= e(FactureController::formatReference($f->getReferencePaiement(), 4)) ?></small>
 <?php endif; ?>
                   </td>
-                  <td class="bill-client"><?= e($f->getNomClient()) ?><small><?= e($f->getEmailClient()) ?></small></td>
-                  <td class="bill-nowrap"><span class="admin-badge <?= $f->getTypeRessource() === 'eau' ? 'admin-badge--ok' : 'admin-badge--info' ?>"><?= e(FactureController::typeLabel($f->getTypeRessource())) ?></span></td>
-                  <td class="bill-period"><span><?= e(dateFr($f->getPeriodeDebut())) ?></span><span>→ <?= e(dateFr($f->getPeriodeFin())) ?></span></td>
-                  <td class="bill-nowrap"><?= e(FactureController::formatQuantite($f->getQuantite(), $f->getTypeRessource())) ?></td>
-                  <td class="bill-amount"><?= e(FactureController::formatMontant($f->getMontant())) ?></td>
-                  <td class="bill-nowrap"><span class="admin-badge <?= $f->getStatut() === 'payee' ? 'admin-badge--muted' : 'admin-badge--warn' ?>"><?= e(FactureController::statutLabel($f->getStatut())) ?></span></td>
-                  <td><div class="admin-actions">
+                  <td class="bill-client" data-label="Citoyen"><?= e($f->getNomClient()) ?><small><?= e($f->getEmailClient()) ?></small></td>
+                  <td class="bill-nowrap" data-label="Fournisseur"><span class="admin-badge <?= $f->getTypeRessource() === 'eau' ? 'admin-badge--ok' : 'admin-badge--info' ?>"><?= e(FactureController::typeLabel($f->getTypeRessource())) ?></span></td>
+                  <td class="bill-period" data-label="Période"><span><?= e(dateFr($f->getPeriodeDebut())) ?></span><span>→ <?= e(dateFr($f->getPeriodeFin())) ?></span></td>
+                  <td class="bill-nowrap" data-label="Consommation"><?= e(FactureController::formatQuantite($f->getQuantite(), $f->getTypeRessource())) ?></td>
+                  <td class="bill-amount" data-label="Montant"><?= e(FactureController::formatMontant($f->getMontant())) ?></td>
+                  <td class="bill-nowrap" data-label="Statut"><span class="admin-badge <?= $f->getStatut() === 'payee' ? 'admin-badge--muted' : 'admin-badge--warn' ?>"><?= e(FactureController::statutLabel($f->getStatut())) ?></span></td>
+                  <td class="bill-admin-actions"><div class="admin-actions">
                     <a class="admin-action" href="<?= url('admin-facture-form', ['id' => $f->getIdFacture()]) ?>" aria-label="Modifier la <?= e(lcfirst(FactureController::titre($f))) ?>"><span data-icon="pencil"></span></a>
                     <form method="post" action="<?= url('admin-facture-supprimer') ?>" data-confirm="Supprimer la <?= e(lcfirst(FactureController::titre($f))) ?> de <?= e($f->getNomClient()) ?> ?">
                       <?= csrfField() ?>
