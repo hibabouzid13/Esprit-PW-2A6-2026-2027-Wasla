@@ -114,8 +114,8 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
 <?php endif; ?>
           </div>
 <?php else: ?>
-          <div class="table-wrap">
-            <table class="data-table svc-table">
+          <div class="table-wrap bill-table-wrap">
+            <table class="data-table svc-table bill-list-table">
               <thead>
                 <tr>
                   <th scope="col">Fournisseur</th>
