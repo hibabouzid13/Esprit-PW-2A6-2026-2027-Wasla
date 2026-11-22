@@ -29,6 +29,7 @@
     name: "Lettres, espaces, apostrophes et tirets uniquement (2 à 50 caractères).",
     phone: "Numéro tunisien à 8 chiffres attendu (ex. 22 123 456).",
     password: "Au moins 8 caractères, dont une lettre et un chiffre.",
+    espace: "Le mot de passe ne doit pas commencer ni finir par un espace.",
     min: (n) => `Au moins ${n} caractères.`,
     max: (n) => `Au plus ${n} caractères.`,
     match: "Les deux valeurs ne correspondent pas.",
@@ -40,6 +41,9 @@
     after: "Cette date doit être postérieure à la précédente.",
     accepted: "Veuillez cocher cette case."
   };
+
+  /* Exactement le même motif que Controller::EMAIL (PHP). */
+  const EMAIL = /^(?=[^@]{1,64}@)[A-Za-z0-9!#$%&'*+\/=?^_`{|}~-]+(\.[A-Za-z0-9!#$%&'*+\/=?^_`{|}~-]+)*@([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
 
   function isDate(value) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -71,17 +75,21 @@
       if (value === "" && name !== "required" && name !== "accepted") continue;
 
       let ok = true;
+      let regle = name;   // message à afficher
       switch (name) {
         case "required": ok = value !== ""; break;
-        case "email": ok = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value) && value.length <= 150; break;
+        case "email": ok = EMAIL.test(value) && value.length <= 150; break;
         case "name": ok = /^\p{L}[\p{L}' -]{1,49}$/u.test(value); break;
         case "phone": ok = /^(\+216)?[2-9]\d{7}$/.test(value.replace(/[\s.-]/g, "")); break;
-        case "password": ok = value.length >= 8 && /[A-Za-z]/.test(value) && /\d/.test(value); break;
+        case "password":
+          ok = value.length >= 8 && /[A-Za-z]/.test(value) && /\d/.test(value);
+          if (ok && (/^\s/.test(field.value) || /\s$/.test(field.value))) { ok = false; regle = "espace"; }
+          break;
         case "min": ok = value.length >= Number(param); break;
         case "max": ok = value.length <= Number(param); break;
         case "match": {
           const other = form.elements[param];
-          ok = !other || value === (other.value || "").trim();
+          ok = !other || field.value === other.value;   // valeurs brutes, comme en PHP
           break;
         }
         case "in": ok = param.split(",").includes(value); break;
@@ -100,8 +108,8 @@
       }
 
       if (!ok) {
-        const custom = field.dataset["message" + name.charAt(0).toUpperCase() + name.slice(1)];
-        const base = MESSAGES[name];
+        const custom = field.dataset["message" + regle.charAt(0).toUpperCase() + regle.slice(1)];
+        const base = MESSAGES[regle];
         return custom || (typeof base === "function" ? base(param) : base);
       }
     }
