@@ -590,6 +590,15 @@ class FactureController extends Controller
             return ['type_ressource' => 'Vous ne pouvez gérer que les factures ' . self::typeLabel($scope['type']) . '.'];
         }
         $post = self::normaliserReferences($post);
+        return $this->sousVerrou($idUtilisateur, fn (): array => $this->inserer($post, $idUtilisateur));
+    }
+
+    /**
+     * Contrôle puis INSERT, toujours appelé sous verrou.
+     * @return array<string, string>
+     */
+    private function inserer(array $post, int $idUtilisateur): array
+    {
         $errors = $this->check($post, $idUtilisateur);
         if ($errors !== []) {
             return $errors;
@@ -621,11 +630,21 @@ class FactureController extends Controller
             return ['type_ressource' => 'Vous ne pouvez gérer que les factures ' . self::typeLabel($scope['type']) . '.'];
         }
         $post = self::normaliserReferences($post);
-        $errors = $this->check($post, $existante->getIdUtilisateur(), $id);
+        $titulaire = $existante->getIdUtilisateur();
+        return $this->sousVerrou($titulaire, fn (): array => $this->modifier($id, $post, $titulaire, $scope));
+    }
+
+    /**
+     * Contrôle puis UPDATE, toujours appelé sous verrou.
+     * @return array<string, string>
+     */
+    private function modifier(int $id, array $post, int $titulaire, array $scope): array
+    {
+        $errors = $this->check($post, $titulaire, $id);
         if ($errors !== []) {
             return $errors;
         }
-        $f = $this->fromPost($post, $existante->getIdUtilisateur());
+        $f = $this->fromPost($post, $titulaire);
         $params = [
             'id' => $id, 't' => $f->getTypeRessource(),
             'ra' => $f->getReferenceAbonnement(), 'rp' => $f->getReferencePaiement(),
@@ -638,6 +657,31 @@ class FactureController extends Controller
                 WHERE f.id_facture = :id' . $this->scopeSql($scope, $params);
         $stmt = $this->db->prepare($sql);
         return $this->ecrire($stmt, $params);
+    }
+
+    /**
+     * Un seul enregistrement à la fois par citoyen : la transaction verrouille sa ligne dans « utilisateur »
+     * (lue, jamais modifiée). Sans ce verrou, deux envois simultanés passent tous les deux le contrôle de
+     * chevauchement et la même facture est enregistrée deux fois.
+     * @param callable(): array<string, string> $ecriture contrôle + écriture
+     * @return array<string, string> erreurs (vide = enregistré)
+     */
+    private function sousVerrou(int $idUtilisateur, callable $ecriture): array
+    {
+        $this->db->beginTransaction();
+        try {
+            $stmt = $this->db->prepare('SELECT id_utilisateur FROM utilisateur WHERE id_utilisateur = :u FOR UPDATE');
+            $stmt->execute(['u' => $idUtilisateur]);
+            $stmt->fetchAll();
+            $errors = $ecriture();
+            $this->db->commit();
+            return $errors;
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
     }
 
     /**
