@@ -50,7 +50,7 @@ $ex = [
                   <select class="admin-select" id="id_utilisateur" name="id_utilisateur" data-rules="required|int" data-message-required="<?= e(FactureController::MESSAGES['id_utilisateur']['required']) ?>">
                     <option value="">— Choisir un citoyen —</option>
 <?php foreach ($citoyens as $c): ?>
-                    <option value="<?= $c->getIdUtilisateur() ?>"<?= $old['id_utilisateur'] === (string) $c->getIdUtilisateur() ? ' selected' : '' ?>><?= e($c->getPrenom() . ' ' . $c->getNom() . ' — ' . $c->getEmail()) ?></option>
+                    <option value="<?= $c->getIdUtilisateur() ?>"<?= $old['id_utilisateur'] === (string) $c->getIdUtilisateur() ? ' selected' : '' ?>><?= e($c->getPrenom() . ' ' . $c->getNom() . ' — ' . ($typeImpose !== '' ? 'compte n° ' . $c->getIdUtilisateur() : $c->getEmail())) ?></option>
 <?php endforeach; ?>
                   </select>
                   <?= $msg('id_utilisateur') ?>
