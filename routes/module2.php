@@ -222,4 +222,35 @@ return [
         header('Location: ' . url('admin-factures'));
         exit;
     },
+
+    // =================================================================
+    // GESTION DES UTILISATEURS : comptes citoyens — Back Office (super admin uniquement)
+    // =================================================================
+
+    // Liste + recherche / filtres / tri
+    'admin-citoyens' => function (): void {
+        AuthController::requireRole(['admin']);
+        $ctrl = new CitoyenController();
+        $filters = CitoyenController::cleanFilters($_GET);
+        $citoyens = $ctrl->search($filters);
+        $summary = $ctrl->summary();
+        $nbFactures = $ctrl->facturesParCitoyen();
+        $gouvernorats = (new ZoneController())->getGouvernorats();
+        require __DIR__ . '/../views/backoffice/pages/citoyens/liste.php';
+    },
+
+    // Fiche (?id=…) : uniquement un compte de rôle « citoyen »
+    'admin-citoyen-voir' => function (): void {
+        AuthController::requireRole(['admin']);
+        $ctrl = new CitoyenController();
+        $id = FactureController::idRecu($_GET['id'] ?? '');
+        $citoyen = $id > 0 ? $ctrl->find($id) : null;
+        if ($citoyen === null) {
+            AuthController::flash('error', 'Citoyen introuvable.');
+            header('Location: ' . url('admin-citoyens'));
+            exit;
+        }
+        $donnees = $ctrl->donneesLiees($id);
+        require __DIR__ . '/../views/backoffice/pages/citoyens/voir.php';
+    },
 ];

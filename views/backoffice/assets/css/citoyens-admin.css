@@ -1,0 +1,124 @@
+/* ==========================================================================
+   Module 2 — Comptes citoyens : compléments Back Office (Hiba).
+   Chargé après factures-admin.css (tableau en cartes, en-tête), sans toucher à admin.css.
+   ========================================================================== */
+
+.citizen-table .bill-client strong {
+  display: block;
+  color: var(--color-heading);
+  overflow-wrap: anywhere;
+}
+
+/* Badges lisibles (au moins 4,5:1), en clair comme en sombre. */
+.citizen-status.admin-badge--danger,
+.citizen-table .admin-badge--danger {
+  color: color-mix(in srgb, var(--color-outage) 80%, var(--color-heading));
+}
+
+.citizen-status.admin-badge--ok,
+.citizen-table .admin-badge--ok {
+  color: color-mix(in srgb, var(--color-emerald-text) 85%, var(--color-heading));
+}
+
+/* Fiche : un nom ou un e-mail très long passe à la ligne au lieu d'élargir la page. */
+.citizen-name {
+  overflow-wrap: anywhere;
+}
+
+.admin-form-layout > * {
+  min-width: 0;
+}
+
+.citizen-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 24px;
+  margin: 0;
+}
+
+.citizen-facts dt {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+
+.citizen-facts dd {
+  margin: 2px 0 0;
+  color: var(--color-heading);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.citizen-data {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.citizen-data li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.citizen-data li:last-child {
+  border-bottom: 0;
+}
+
+.citizen-data b {
+  color: var(--color-heading);
+}
+
+.citizen-note {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.citizen-link {
+  margin-top: 14px;
+}
+
+/* Gestion du compte : suspension et suppression. */
+.citizen-manage {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.citizen-manage__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.citizen-manage__buttons form {
+  margin: 0;
+}
+
+.admin-btn.citizen-danger {
+  border: 1px solid color-mix(in srgb, var(--color-outage) 55%, transparent);
+  background: transparent;
+  color: color-mix(in srgb, var(--color-outage) 80%, var(--color-heading));
+}
+
+.admin-btn.citizen-danger:hover {
+  background: var(--color-red-tint);
+}
+
+.citizen-manage__buttons .admin-btn [data-icon],
+.citizen-link [data-icon] {
+  flex: none;
+}
+
+@media (max-width: 720px) {
+  .citizen-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .citizen-table td.bill-client {
+    grid-column: 1 / -1;
+  }
+}
