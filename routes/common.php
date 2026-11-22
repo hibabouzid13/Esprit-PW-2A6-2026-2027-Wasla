@@ -37,7 +37,7 @@ return [
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors = (new AuthController())->register($_POST);
             foreach (array_keys($old) as $key) {
-                $old[$key] = trim((string) ($_POST[$key] ?? ''));
+                $old[$key] = trim(AuthController::texte($_POST[$key] ?? '') ?? '');
             }
             if ($errors === []) {
                 AuthController::flash('success', 'Votre compte a été créé. Vous pouvez maintenant vous connecter.');
@@ -61,7 +61,7 @@ return [
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $auth = new AuthController();
             $errors = $auth->login($_POST);
-            $old['email'] = trim((string) ($_POST['email'] ?? ''));
+            $old['email'] = trim(AuthController::texte($_POST['email'] ?? '') ?? '');
             if ($errors === []) {
                 $user = AuthController::currentUser();
                 AuthController::flash('success', 'Bienvenue, ' . $user->getPrenom() . ' !');

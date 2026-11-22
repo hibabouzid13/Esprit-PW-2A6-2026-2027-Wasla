@@ -27,6 +27,8 @@ class AuthController extends Controller
     private const MAX_LOGIN_ATTEMPTS = 5;
     private const LOCK_SECONDS = 60;
 
+    private const EMAIL_EN_DOUBLE = 'Un compte existe déjà avec cette adresse e-mail.';
+
     /** Utilisateur connecté, chargé une seule fois par requête. */
     private static ?UserModel $current = null;
     private static bool $loaded = false;
@@ -126,12 +128,38 @@ class AuthController extends Controller
         return $_SESSION['csrf_token'];
     }
 
-    public static function verifyCsrfToken(?string $token): bool
+    public static function verifyCsrfToken(mixed $token): bool
     {
-        if (!$token || empty($_SESSION['csrf_token'])) {
+        if (!is_string($token) || $token === '' || empty($_SESSION['csrf_token'])) {
             return false;
         }
         return hash_equals($_SESSION['csrf_token'], $token);
+    }
+
+    // ==============================================================
+    // VALEURS REÇUES DU NAVIGATEUR
+    // ==============================================================
+
+    /** Texte exploitable, sinon null (liste envoyée à la place d'un texte, UTF-8 invalide, octet nul). */
+    public static function texte(mixed $valeur): ?string
+    {
+        return is_string($valeur) && !str_contains($valeur, "\0") && mb_check_encoding($valeur, 'UTF-8') ? $valeur : null;
+    }
+
+    /**
+     * Champs illisibles : refusés avant toute conversion en texte.
+     * @param string[] $champs
+     * @return array<string, string>
+     */
+    private static function illisibles(array $post, array $champs): array
+    {
+        $errors = [];
+        foreach ($champs as $champ) {
+            if (isset($post[$champ]) && self::texte($post[$champ]) === null) {
+                $errors[$champ] = 'Valeur non autorisée.';
+            }
+        }
+        return $errors;
     }
 
     // ==============================================================
@@ -210,6 +238,10 @@ class AuthController extends Controller
             return ['form' => 'Jeton de sécurité invalide ou expiré. Veuillez réessayer.'];
         }
 
+        $illisibles = self::illisibles($post, ['prenom', 'nom', 'email', 'telephone', 'id_zone', 'password', 'password_confirm', 'terms']);
+        if ($illisibles !== []) {
+            return $illisibles;
+        }
         $errors = $this->validate($post, [
             'prenom'           => 'required|name',
             'nom'              => 'required|name',
@@ -222,8 +254,13 @@ class AuthController extends Controller
         ]);
 
         $idZone = (int) ($post['id_zone'] ?? 0);
-        if (!isset($errors['id_zone']) && !(new ZoneController())->exists($idZone)) {
+        // Un gouvernorat, pas une délégation ; même message que le formulaire
+        $gouvernorats = array_map(fn ($zone) => $zone->getIdZone(), (new ZoneController())->getGouvernorats());
+        if (isset($errors['id_zone']) || !in_array($idZone, $gouvernorats, true)) {
             $errors['id_zone'] = 'Veuillez choisir votre gouvernorat.';
+        }
+        if (isset($errors['terms'])) {
+            $errors['terms'] = "Veuillez accepter les conditions d'utilisation.";
         }
         if (isset($errors['password_confirm']) && $errors['password_confirm'] === 'Les deux valeurs ne correspondent pas.') {
             $errors['password_confirm'] = 'Les mots de passe ne correspondent pas.';
@@ -231,13 +268,13 @@ class AuthController extends Controller
 
         $email = mb_strtolower(trim((string) ($post['email'] ?? '')));
         if (!isset($errors['email']) && $this->findByEmail($email) !== null) {
-            $errors['email'] = 'Un compte existe déjà avec cette adresse e-mail.';
+            $errors['email'] = self::EMAIL_EN_DOUBLE;
         }
         if ($errors !== []) {
             return $errors;
         }
 
-        $telephone = preg_replace('/[\s.-]/', '', trim((string) ($post['telephone'] ?? ''))) ?: null;
+        $telephone = preg_replace('/[\s.-]/u', '', trim((string) ($post['telephone'] ?? ''))) ?: null;
 
         $user = new UserModel();
         $user->setNom(trim((string) $post['nom']));
@@ -249,7 +286,15 @@ class AuthController extends Controller
         $user->setStatutCompte('actif');
         $user->setIdZone($idZone);
 
-        $this->insertUser($user);
+        try {
+            $this->insertUser($user);
+        } catch (PDOException $e) {
+            // Deux inscriptions au même moment : la clé uq_utilisateur_email refuse la seconde
+            if (($e->errorInfo[1] ?? null) === 1062 && str_contains($e->getMessage(), 'uq_utilisateur_email')) {
+                return ['email' => self::EMAIL_EN_DOUBLE];
+            }
+            throw $e;
+        }
         return [];
     }
 
@@ -274,8 +319,18 @@ class AuthController extends Controller
             return ['form' => 'Trop de tentatives. Réessayez dans ' . ($lockedUntil - time()) . ' secondes.'];
         }
 
+        $illisibles = self::illisibles($post, ['email', 'password']);
+        if ($illisibles !== []) {
+            return $illisibles;
+        }
         $errors = $this->validate($post, ['email' => 'required|email', 'password' => 'required']);
         if ($errors !== []) {
+            // Champ vide : même message que le formulaire
+            foreach (['email' => 'Veuillez saisir votre adresse e-mail.', 'password' => 'Veuillez saisir votre mot de passe.'] as $champ => $message) {
+                if (isset($errors[$champ]) && trim($post[$champ] ?? '') === '') {
+                    $errors[$champ] = $message;
+                }
+            }
             return $errors;
         }
 
