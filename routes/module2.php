@@ -224,6 +224,50 @@ return [
     },
 
     // =================================================================
+    // GESTION DES UTILISATEURS : profil du citoyen — Front Office (SON compte uniquement)
+    // =================================================================
+
+    // L'identifiant vient toujours de la session, jamais de l'adresse ni du formulaire
+    'mon-profil' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        $user = AuthController::currentUser();
+        $errors = [];
+        $errorsMdp = [];
+        $old = CitoyenController::toForm($user);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $errors = (new CitoyenController())->update($user->getIdUtilisateur(), $_POST);
+            if ($errors === []) {
+                AuthController::flash('success', 'Profil modifié.');
+                header('Location: ' . url('mon-profil'));
+                exit;
+            }
+            $old = CitoyenController::postedForm($_POST);
+        }
+        $gouvernorats = (new ZoneController())->getGouvernorats();
+        require __DIR__ . '/../views/frontoffice/pages/citoyens/mon-profil.php';
+    },
+
+    // Changement de mot de passe : POST uniquement, mot de passe actuel obligatoire
+    'mon-mot-de-passe' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . url('mon-profil'));
+            exit;
+        }
+        $user = AuthController::currentUser();
+        $errors = [];
+        $errorsMdp = (new CitoyenController())->changerMotDePasse($user->getIdUtilisateur(), $_POST);
+        if ($errorsMdp === []) {
+            AuthController::flash('success', 'Mot de passe modifié.');
+            header('Location: ' . url('mon-profil'));
+            exit;
+        }
+        $old = CitoyenController::toForm($user);
+        $gouvernorats = (new ZoneController())->getGouvernorats();
+        require __DIR__ . '/../views/frontoffice/pages/citoyens/mon-profil.php';
+    },
+
+    // =================================================================
     // GESTION DES UTILISATEURS : comptes citoyens — Back Office (super admin uniquement)
     // =================================================================
 
