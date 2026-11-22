@@ -46,7 +46,7 @@ $ex = [
 
 <?php if (!$edition): ?>
                 <div class="admin-field admin-field--full<?= $err('id_utilisateur') ?>">
-                  <label for="id_utilisateur">Citoyen titulaire <span class="req">*</span></label>
+                  <label for="id_utilisateur">Citoyen titulaire <span class="req" aria-hidden="true">*</span></label>
                   <select class="admin-select" id="id_utilisateur" name="id_utilisateur" data-rules="required|int" data-message-required="Choisissez le citoyen titulaire de la facture.">
                     <option value="">— Choisir un citoyen —</option>
 <?php foreach ($citoyens as $c): ?>
@@ -58,7 +58,7 @@ $ex = [
 <?php endif; ?>
 
                 <div class="admin-field admin-field--full<?= $err('type_ressource') ?>">
-                  <label for="type_ressource">Fournisseur <span class="req">*</span></label>
+                  <label for="type_ressource">Fournisseur <span class="req" aria-hidden="true">*</span></label>
 <?php if ($typeImpose !== ''): ?>
                   <!-- STEG / SONEDE : ressource imposée par le rôle (revérifiée en PHP) -->
                   <input type="hidden" name="type_ressource" value="<?= e($typeImpose) ?>">
@@ -75,7 +75,7 @@ $ex = [
                 </div>
 
                 <div class="admin-field<?= $err('reference_abonnement') ?>">
-                  <label for="reference_abonnement">Référence d'abonnement <span class="req">*</span></label>
+                  <label for="reference_abonnement">Référence d'abonnement <span class="req" aria-hidden="true">*</span></label>
                   <input class="admin-input" id="reference_abonnement" name="reference_abonnement" type="text" inputmode="numeric" autocomplete="off"
                          value="<?= e($old['reference_abonnement']) ?>" placeholder="<?= e($ex[0]) ?>" aria-describedby="abo-hint"
                          data-rules="required" data-message-required="Indiquez la référence d'abonnement (en haut de la facture).">
@@ -92,28 +92,28 @@ $ex = [
                 </div>
 
                 <div class="admin-field<?= $err('periode_debut') ?>">
-                  <label for="periode_debut">Début de la période <span class="req">*</span></label>
+                  <label for="periode_debut">Début de la période <span class="req" aria-hidden="true">*</span></label>
                   <input class="admin-input" id="periode_debut" name="periode_debut" type="date" value="<?= e($old['periode_debut']) ?>"
                          data-rules="required|date" data-message-required="Indiquez le début de la période.">
                   <?= $msg('periode_debut') ?>
                 </div>
 
                 <div class="admin-field<?= $err('periode_fin') ?>">
-                  <label for="periode_fin">Fin de la période <span class="req">*</span></label>
+                  <label for="periode_fin">Fin de la période <span class="req" aria-hidden="true">*</span></label>
                   <input class="admin-input" id="periode_fin" name="periode_fin" type="date" value="<?= e($old['periode_fin']) ?>"
                          data-rules="required|date" data-message-required="Indiquez la fin de la période.">
                   <?= $msg('periode_fin') ?>
                 </div>
 
                 <div class="admin-field<?= $err('quantite') ?>">
-                  <label for="quantite">Consommation (<span data-bill-unit><?= $unite ?></span>) <span class="req">*</span></label>
+                  <label for="quantite">Consommation (<span data-bill-unit><?= $unite ?></span>) <span class="req" aria-hidden="true">*</span></label>
                   <input class="admin-input" id="quantite" name="quantite" type="text" autocomplete="off" value="<?= e($old['quantite']) ?>" placeholder="ex. <?= $exQte ?>"
                          data-rules="required|max:20" data-message-required="Indiquez la consommation." data-message-max="Valeur trop longue.">
                   <?= $msg('quantite') ?>
                 </div>
 
                 <div class="admin-field<?= $err('montant') ?>">
-                  <label for="montant">Montant (TND) <span class="req">*</span></label>
+                  <label for="montant">Montant (TND) <span class="req" aria-hidden="true">*</span></label>
                   <input class="admin-input" id="montant" name="montant" type="text" autocomplete="off" value="<?= e($old['montant']) ?>" placeholder="ex. 500 ou 500 TND"
                          data-rules="required|max:20" data-message-required="Indiquez le montant." data-message-max="Valeur trop longue.">
                   <?= $msg('montant') ?>
@@ -127,7 +127,7 @@ $ex = [
                 </div>
 
                 <fieldset class="admin-field<?= $err('statut') ?>">
-                  <legend>Statut <span class="req">*</span></legend>
+                  <legend>Statut <span class="req" aria-hidden="true">*</span></legend>
                   <div class="admin-choices">
 <?php foreach (FactureModel::STATUTS as $s): ?>
                     <label class="admin-choice">
