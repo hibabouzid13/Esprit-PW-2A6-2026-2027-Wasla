@@ -322,7 +322,11 @@
     const peak = values.indexOf(Math.max(...known));
     const avg = known.reduce((a, b) => a + b, 0) / known.length;
     const u = unit(type);
-    const axis = [4, 3, 2, 1, 0].map((k) => `<span>${F.number((max / 4) * k)}</span>`).join("");
+    // Assez de décimales pour que les graduations restent exactes (30 → 22,5 et non 23)
+    const step = max / 4;
+    let digits = 0;
+    while (digits < 3 && Math.abs(step * 10 ** digits - Math.round(step * 10 ** digits)) > 1e-6) digits += 1;
+    const axis = [4, 3, 2, 1, 0].map((k) => `<span>${F.number(step * k, k ? digits : 0)}</span>`).join("");
     const bars = values.map((v, i) => {
       const month = S.fmt.month(months[i]);
       if (v == null) return `<li class="bill-bar is-empty" aria-label="${S.fmt.monthLong(months[i])} : aucune facture"><span class="bill-bar__label" aria-hidden="true">${month}</span></li>`;
