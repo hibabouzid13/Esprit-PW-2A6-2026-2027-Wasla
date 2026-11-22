@@ -131,10 +131,10 @@ class FactureController extends Controller
      */
     public static function cleanFilters(array $get): array
     {
-        $q = trim((string) ($get['q'] ?? ''));
-        $type = (string) ($get['type'] ?? '');
-        $statut = (string) ($get['statut'] ?? '');
-        $tri = (string) ($get['tri'] ?? 'recentes');
+        $q = trim(self::texte($get['q'] ?? '') ?? '');
+        $type = self::texte($get['type'] ?? '') ?? '';
+        $statut = self::texte($get['statut'] ?? '') ?? '';
+        $tri = self::texte($get['tri'] ?? '') ?? '';
         return [
             'q'      => mb_substr($q, 0, 50),
             'type'   => in_array($type, FactureModel::TYPES, true) ? $type : '',
@@ -264,6 +264,32 @@ class FactureController extends Controller
     }
 
     // ==============================================================
+    // VALEURS REÇUES DU NAVIGATEUR
+    // ==============================================================
+
+    /** Texte exploitable, sinon null (liste envoyée à la place d'un texte, UTF-8 invalide, octet nul). */
+    private static function texte(mixed $valeur): ?string
+    {
+        return is_string($valeur) && !str_contains($valeur, "\0") && mb_check_encoding($valeur, 'UTF-8') ? $valeur : null;
+    }
+
+    /** Identifiant reçu : uniquement des chiffres, sinon 0 (un simple (int) lirait une liste ou « 1abc » comme 1). */
+    public static function idRecu(mixed $valeur): int
+    {
+        return is_string($valeur) && preg_match('/^[0-9]{1,9}\z/', $valeur) ? (int) $valeur : 0;
+    }
+
+    /** Vraie date au format AAAA-MM-JJ (« 2025-13-45 » est refusée). */
+    private static function estDate(string $valeur): bool
+    {
+        if (!preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}\z/', $valeur)) {
+            return false;
+        }
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $valeur);
+        return $date !== false && $date->format('Y-m-d') === $valeur;
+    }
+
+    // ==============================================================
     // VALIDATION
     // ==============================================================
 
@@ -277,6 +303,16 @@ class FactureController extends Controller
      */
     public function check(array $post, int $idUtilisateur, ?int $exclureId = null): array
     {
+        // Valeur illisible : refusée tout de suite, avant toute conversion en texte
+        $illisibles = [];
+        foreach (array_keys(self::emptyForm()) as $champ) {
+            if (isset($post[$champ]) && self::texte($post[$champ]) === null) {
+                $illisibles[$champ] = 'Valeur non autorisée.';
+            }
+        }
+        if ($illisibles !== []) {
+            return $illisibles;
+        }
         $post = self::normaliserReferences($post);
         $errors = $this->validate($post, self::RULES);
         $v = fn (string $k): string => trim((string) ($post[$k] ?? ''));
@@ -334,7 +370,10 @@ class FactureController extends Controller
     public static function normaliserReferences(array $post): array
     {
         foreach (array_keys(self::REFERENCE_MAX) as $champ) {
-            $post[$champ] = preg_replace('/\s+/u', '', (string) ($post[$champ] ?? '')) ?? '';
+            $valeur = self::texte($post[$champ] ?? '');
+            if ($valeur !== null) {   // une valeur illisible reste telle quelle : check() la refuse
+                $post[$champ] = preg_replace('/\s+/u', '', $valeur) ?? '';
+            }
         }
         return $post;
     }
@@ -385,7 +424,8 @@ class FactureController extends Controller
      */
     private static function parseNombre(string $valeur, string $unites, int $decimales): ?array
     {
-        $motif = '/^(\d{1,9}(?:[.,]\d{1,' . $decimales . '})?)\s*(' . $unites . ')?$/iu';
+        // [0-9] et non \d : avec l'option « u », \d accepte les chiffres arabes, que (float) ne sait pas lire
+        $motif = '/^([0-9]{1,9}(?:[.,][0-9]{1,' . $decimales . '})?)\s*(' . $unites . ')?$/iu';
         if (!preg_match($motif, trim($valeur), $m)) {
             return null;
         }
@@ -438,11 +478,10 @@ class FactureController extends Controller
     public static function dateErrors(string $debut, string $fin, string $echeance, string $type, string $aujourdhui): array
     {
         $errors = [];
-        $estDate = fn (string $d): bool => (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $d);
         $minFr = dateFr(self::DATE_MIN);
 
         foreach (['periode_debut' => [$debut, 'Le début'], 'periode_fin' => [$fin, 'La fin']] as $champ => [$d, $nom]) {
-            if (!$estDate($d)) {
+            if (!self::estDate($d)) {
                 continue;
             }
             if ($d < self::DATE_MIN) {
@@ -452,7 +491,7 @@ class FactureController extends Controller
             }
         }
 
-        if ($estDate($debut) && $estDate($fin) && !isset($errors['periode_debut']) && !isset($errors['periode_fin'])) {
+        if (self::estDate($debut) && self::estDate($fin) && !isset($errors['periode_debut']) && !isset($errors['periode_fin'])) {
             if ($debut >= $fin) {
                 $errors['periode_fin'] = 'La fin de la période doit être strictement après le début.';
             } elseif ($type !== '') {
@@ -469,7 +508,7 @@ class FactureController extends Controller
             }
         }
 
-        if ($echeance !== '' && $estDate($echeance) && $estDate($fin) && !isset($errors['periode_fin'])) {
+        if ($echeance !== '' && self::estDate($echeance) && self::estDate($fin) && !isset($errors['periode_fin'])) {
             $max = (new DateTimeImmutable($fin))->modify('+' . self::ECHEANCE_MAX_JOURS . ' days')->format('Y-m-d');
             if ($echeance < $fin) {
                 $errors['date_echeance'] = 'La date limite de paiement doit être le jour de la fin de la période ou après.';
@@ -714,7 +753,7 @@ class FactureController extends Controller
         $post = self::normaliserReferences($post);   // références réaffichées sans espaces
         $out = [];
         foreach (array_keys(self::emptyForm()) as $k) {
-            $out[$k] = trim((string) ($post[$k] ?? ''));
+            $out[$k] = trim(self::texte($post[$k] ?? '') ?? '');
         }
         return $out;
     }

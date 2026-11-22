@@ -97,7 +97,7 @@ return [
     'facture-voir' => function (): void {
         AuthController::requireRole(['citoyen']);
         $scope = FactureController::scopeFor(AuthController::currentUser());
-        $id = (int) ($_GET['id'] ?? 0);
+        $id = FactureController::idRecu($_GET['id'] ?? '');
         $ctrl = new FactureController();
         $facture = $id > 0 ? $ctrl->find($id, $scope) : null;
         if ($facture === null) {
@@ -116,7 +116,7 @@ return [
         $user = AuthController::currentUser();
         $scope = FactureController::scopeFor($user);
         $ctrl = new FactureController();
-        $id = (int) ($_GET['id'] ?? 0);
+        $id = FactureController::idRecu($_GET['id'] ?? '');
         $facture = $id > 0 ? $ctrl->find($id, $scope) : null;
         if ($facture === null) {
             AuthController::flash('error', 'Facture introuvable.');
@@ -143,7 +143,7 @@ return [
         AuthController::requireRole(['citoyen']);
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $scope = FactureController::scopeFor(AuthController::currentUser());
-            $ok = (new FactureController())->delete((int) ($_POST['id_facture'] ?? 0), $scope);
+            $ok = (new FactureController())->delete(FactureController::idRecu($_POST['id_facture'] ?? ''), $scope);
             AuthController::flash($ok ? 'success' : 'error', $ok ? 'Facture supprimée.' : 'Facture introuvable.');
         }
         // Retour vers la page d'origine (liste blanche : jamais une adresse fournie telle quelle)
@@ -173,10 +173,10 @@ return [
         $user = AuthController::currentUser();
         $scope = FactureController::scopeFor($user);
         $ctrl = new FactureController();
-        $id = (int) ($_GET['id'] ?? 0);
+        $id = FactureController::idRecu($_GET['id'] ?? '');
         $facture = null;
-        if ($id > 0) {
-            $facture = $ctrl->find($id, $scope);
+        if (isset($_GET['id'])) {   // ?id illisible : introuvable, surtout pas un ajout
+            $facture = $id > 0 ? $ctrl->find($id, $scope) : null;
             if ($facture === null) {
                 AuthController::flash('error', 'Facture introuvable.');
                 header('Location: ' . url('admin-factures'));
@@ -192,7 +192,7 @@ return [
                 $errors = $ctrl->update($id, $_POST, $scope);
             } else {
                 // Le titulaire doit être un compte citoyen actif
-                $idCitoyen = (int) ($_POST['id_utilisateur'] ?? 0);
+                $idCitoyen = FactureController::idRecu($_POST['id_utilisateur'] ?? '');
                 $ids = array_map(fn ($c) => $c->getIdUtilisateur(), $ctrl->getCitoyens());
                 $errors = in_array($idCitoyen, $ids, true)
                     ? $ctrl->create($_POST, $idCitoyen, $scope)
@@ -216,7 +216,7 @@ return [
         AuthController::requireRole(AuthController::BACKOFFICE_ROLES);
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $scope = FactureController::scopeFor(AuthController::currentUser());
-            $ok = (new FactureController())->delete((int) ($_POST['id_facture'] ?? 0), $scope);
+            $ok = (new FactureController())->delete(FactureController::idRecu($_POST['id_facture'] ?? ''), $scope);
             AuthController::flash($ok ? 'success' : 'error', $ok ? 'Facture supprimée.' : 'Facture introuvable.');
         }
         header('Location: ' . url('admin-factures'));
