@@ -90,11 +90,13 @@ $isAdmin = AuthController::isBackOffice($user);
               <h3>Alertes personnalisées</h3>
               <p>Soyez prévenu des interruptions planifiées et des incidents dans votre zone.</p>
             </a>
+<?php if (serviceVisible('factures')): ?>
             <a class="service-card account-action" href="<?= url('factures') ?>">
               <span class="service-card__icon service-card__icon--navy" data-icon="file-text"></span>
               <h3>Factures</h3>
               <p>Analysez vos factures STEG et SONEDE et recevez des recommandations.</p>
             </a>
+<?php endif; ?>
             <a class="service-card account-action" href="<?= url('refuges') ?>">
               <span class="service-card__icon" data-icon="home"></span>
               <h3>Zones refuge</h3>

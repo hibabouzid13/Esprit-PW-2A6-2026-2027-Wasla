@@ -73,6 +73,12 @@
 
   /* Mobile menu -------------------------------------------- */
 
+  /* Services cachés pour ce rôle (SERVICE_ROLES, config/helpers.php) */
+  function lienVisible(href) {
+    const masques = (document.body.dataset.servicesMasques || "").split(" ").filter(Boolean);
+    return !masques.some((service) => href === "index.php?action=" + service);
+  }
+
   function buildMobileMenu() {
     const root = document.querySelector("[data-mobile-menu-root]");
     if (!root) return;
@@ -87,6 +93,7 @@
             </button>
             <div class="mobile-menu__sub" id="mobile-services" hidden>
               ${item.children
+                .filter((child) => lienVisible(child.href))
                 .map(
                   (child) =>
                     `<a href="${child.href}" data-close-menu><span data-icon="${child.icon}"></span>${child.label}</a>`
@@ -447,7 +454,7 @@
   function renderSearch(query) {
     if (!searchResults || !DATA) return;
     const q = query.trim().toLowerCase();
-    const results = DATA.searchIndex.filter((item) => {
+    const results = DATA.searchIndex.filter((item) => lienVisible(item.url)).filter((item) => {
       if (!q) return true;
       const haystack = [item.title, item.description, t(item.title), t(item.description)].join(" ");
       return haystack.toLowerCase().includes(q);

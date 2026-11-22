@@ -29,7 +29,9 @@
           <div class="dropdown" id="services-dropdown" hidden>
             <p class="dropdown__label">Services citoyens</p>
             <a href="<?= url('alertes') ?>"><span class="dropdown__icon" data-icon="bell"></span><span class="dropdown__text">Alertes personnalisées<small>Notifications ciblées</small></span></a>
+<?php if (serviceVisible('factures')): ?>
             <a href="<?= url('factures') ?>"><span class="dropdown__icon" data-icon="file-text"></span><span class="dropdown__text">Factures &amp; IA<small>Suivi et analyse</small></span></a>
+<?php endif; ?>
             <a href="<?= url('fournisseurs') ?>"><span class="dropdown__icon" data-icon="wrench"></span><span class="dropdown__text">Fournisseurs<small>Techniciens agréés</small></span></a>
             <a href="<?= url('refuges') ?>"><span class="dropdown__icon" data-icon="home"></span><span class="dropdown__text">Zones refuge<small>Points d'accueil</small></span></a>
             <a href="<?= url('relais') ?>"><span class="dropdown__icon" data-icon="snowflake"></span><span class="dropdown__text">Relais de voisinage<small>Entraide locale</small></span></a>

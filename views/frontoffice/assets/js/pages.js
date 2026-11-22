@@ -276,7 +276,8 @@
     const grid = document.querySelector("[data-services-grid]");
     if (!grid || !DATA) return;
 
-    grid.innerHTML = DATA.services
+    const masques = (document.body.dataset.servicesMasques || "").split(" ").filter(Boolean);
+    grid.innerHTML = DATA.services.filter((service) => !masques.some((cle) => service.link === "index.php?action=" + cle))
       .map(
         (service) => `
       <article class="service-card" id="${service.id}">

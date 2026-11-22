@@ -9,6 +9,9 @@ declare(strict_types=1);
 /** Pages du menu « Services » : le lien Services de la navbar reste actif sur chacune d'elles. */
 const SERVICE_PAGES = ['services', 'alertes', 'factures', 'fournisseurs', 'refuges', 'relais', 'sante'];
 
+/** Services réservés à certains rôles (les mêmes que requireRole() dans la route du service). Absent = montré à tous. */
+const SERVICE_ROLES = ['factures' => ['citoyen']];
+
 /** Échappe un texte avant de l'afficher (protection XSS). À utiliser pour TOUTE donnée affichée. */
 function e(?string $value): string
 {
@@ -150,4 +153,20 @@ function profilRoute(UserModel $user): ?string
         'sonede'      => 'admin-profil',
     ][$user->getRole()] ?? '';
     return $action !== '' && routeExists($action) ? $action : null;
+}
+
+/**
+ * Le service est-il proposé dans les menus ? Le visiteur voit tout (il passe par la connexion).
+ * Ce n'est que de l'affichage : la protection reste requireRole() dans chaque route.
+ */
+function serviceVisible(string $service): bool
+{
+    $user = AuthController::currentUser();
+    return $user === null || !isset(SERVICE_ROLES[$service]) || in_array($user->getRole(), SERVICE_ROLES[$service], true);
+}
+
+/** Services à cacher pour l'utilisateur connecté, pour le menu mobile et la recherche (data-services-masques). */
+function servicesMasques(): string
+{
+    return implode(' ', array_filter(array_keys(SERVICE_ROLES), fn (string $service): bool => !serviceVisible($service)));
 }
