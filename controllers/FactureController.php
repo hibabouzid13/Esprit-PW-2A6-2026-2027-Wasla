@@ -753,6 +753,13 @@ class FactureController extends Controller
         return ['a_payer' => 'À payer', 'payee' => 'Payée'][$statut] ?? $statut;
     }
 
+    /** En retard : pas payée et date limite passée (même règle que les pages du citoyen). */
+    public static function enRetard(FactureModel $f): bool
+    {
+        $echeance = $f->getDateEcheance();
+        return $f->getStatut() === 'a_payer' && $echeance !== null && $echeance < date('Y-m-d');
+    }
+
     public static function formatMontant(float $montant): string
     {
         return number_format($montant, 3, ',', ' ') . ' TND';

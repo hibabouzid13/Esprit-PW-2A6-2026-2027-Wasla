@@ -108,7 +108,11 @@ $logos = [
                 </tr>
               </thead>
               <tbody>
-<?php foreach ($factures as $f): ?>
+<?php foreach ($factures as $f):
+    [$badge, $libelle] = FactureController::enRetard($f)
+        ? ['admin-badge--danger', 'En retard']
+        : [$f->getStatut() === 'payee' ? 'admin-badge--muted' : 'admin-badge--warn', FactureController::statutLabel($f->getStatut())];
+?>
                 <tr>
                   <td class="admin-table__id" data-label="N°"><?= $f->getIdFacture() ?></td>
                   <td class="admin-table__main bill-nowrap bill-refs" data-label="Références">
@@ -122,7 +126,7 @@ $logos = [
                   <td class="bill-period" data-label="Période"><span><?= e(dateFr($f->getPeriodeDebut())) ?></span><span>→ <?= e(dateFr($f->getPeriodeFin())) ?></span></td>
                   <td class="bill-nowrap" data-label="Consommation"><?= e(FactureController::formatQuantite($f->getQuantite(), $f->getTypeRessource())) ?></td>
                   <td class="bill-amount" data-label="Montant"><?= e(FactureController::formatMontant($f->getMontant())) ?></td>
-                  <td class="bill-nowrap" data-label="Statut"><span class="admin-badge <?= $f->getStatut() === 'payee' ? 'admin-badge--muted' : 'admin-badge--warn' ?>"><?= e(FactureController::statutLabel($f->getStatut())) ?></span></td>
+                  <td class="bill-nowrap" data-label="Statut"><span class="admin-badge <?= $badge ?>"><?= e($libelle) ?></span></td>
                   <td class="bill-admin-actions"><div class="admin-actions">
                     <a class="admin-action" href="<?= url('admin-facture-form', ['id' => $f->getIdFacture()]) ?>" aria-label="Modifier la <?= e(lcfirst(FactureController::titre($f))) ?>"><span data-icon="pencil"></span></a>
                     <form method="post" action="<?= url('admin-facture-supprimer') ?>" data-confirm="Supprimer la <?= e(lcfirst(FactureController::titre($f))) ?> de <?= e($f->getNomClient()) ?> ?">
