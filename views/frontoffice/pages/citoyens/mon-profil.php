@@ -30,7 +30,7 @@ $attr = fn (array $erreurs, string $k, string $aide = ''): string => CitoyenCont
         </div>
       </header>
 
-      <form class="bill-wizard bill-wizard--full bill-glass" method="post" action="<?= url('mon-profil') ?>" data-validate>
+      <form class="bill-wizard bill-wizard--full bill-glass" method="post" action="<?= url('mon-profil') ?>" data-validate data-citoyen-form>
         <?= csrfField() ?>
 <?php if ($errors !== []): ?>
         <div class="form-alert form-alert--error" role="alert"><?= e($errors['form'] ?? 'Veuillez corriger les champs indiqués.') ?></div>
@@ -86,7 +86,7 @@ $attr = fn (array $erreurs, string $k, string $aide = ''): string => CitoyenCont
         </div>
       </form>
 
-      <form class="bill-wizard bill-wizard--full bill-glass" method="post" action="<?= url('mon-mot-de-passe') ?>" data-validate>
+      <form class="bill-wizard bill-wizard--full bill-glass" method="post" action="<?= url('mon-mot-de-passe') ?>" data-validate data-citoyen-form>
         <?= csrfField() ?>
 <?php if ($errorsMdp !== []): ?>
         <div class="form-alert form-alert--error" role="alert"><?= e($errorsMdp['form'] ?? 'Veuillez corriger les champs indiqués.') ?></div>
@@ -129,5 +129,5 @@ $title       = 'Mon profil — WASLA';
 $description = 'Modifier votre profil et votre mot de passe WASLA.';
 $currentPage = 'mon-compte';
 $pageCss     = ['pages', 'services', 'factures'];
-$pageScripts = ['js/data.js', 'js/icons.js', 'js/layout.js', 'js/factures-crud.js'];
+$pageScripts = ['js/data.js', 'js/icons.js', 'js/layout.js', 'js/factures-crud.js', 'js/citoyens-crud.js'];
 require __DIR__ . '/../../layout.php';

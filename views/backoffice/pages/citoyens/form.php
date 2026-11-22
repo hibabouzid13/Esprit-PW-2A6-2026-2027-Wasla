@@ -40,7 +40,7 @@ $attr = fn (string $k, string $aide = ''): string => CitoyenController::attribut
 <?php if ($errors !== []): ?>
               <p class="admin-flash admin-flash--error" role="alert"><?= e($errors['form'] ?? 'Veuillez corriger les champs indiqués.') ?></p>
 <?php endif; ?>
-              <form class="admin-form" method="post" action="<?= e($action) ?>" data-validate>
+              <form class="admin-form" method="post" action="<?= e($action) ?>" data-validate data-citoyen-form>
                 <?= csrfField() ?>
 
                 <div class="admin-field<?= $err('prenom') ?>">
@@ -124,5 +124,5 @@ $attr = fn (string $k, string $aide = ''): string => CitoyenController::attribut
 $content     = ob_get_clean();
 $title       = ($edition ? 'Modifier un citoyen' : 'Ajouter un citoyen') . ' — WASLA Admin';
 $currentPage = 'admin-citoyen-form';
-$pageScripts = ['js/factures-crud.js'];   // icônes du module
+$pageScripts = ['js/factures-crud.js', 'js/citoyens-crud.js'];   // icônes + contrôles du module
 require __DIR__ . '/../../layout.php';

@@ -39,6 +39,15 @@ class CitoyenController extends Controller
     /** Changement de mot de passe : l'actuel est demandé en plus. */
     public const CHANGEMENT = ['password_actuel' => 'required'] + self::MOT_DE_PASSE;
 
+    /**
+     * Format d'e-mail : le même motif en PHP et en JavaScript (data-motif).
+     * La règle commune « email » n'est pas identique des deux côtés (« a..b@exemple.tn » passait en JS seulement).
+     */
+    public const EMAIL_MOTIF = '^(?=[^@]{1,64}@)[A-Za-z0-9!#$%&\'*+\/=?^_`{|}~-]+(\.[A-Za-z0-9!#$%&\'*+\/=?^_`{|}~-]+)*@([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$';
+
+    private const EMAIL_INVALIDE = 'Veuillez saisir une adresse e-mail valide.';
+    private const ESPACE_AU_BORD = 'Le mot de passe ne doit pas commencer ni finir par un espace.';
+
     /** Messages : source unique pour PHP et pour JavaScript (data-message-*). */
     public const MESSAGES = [
         'prenom'           => ['required' => 'Indiquez le prénom.'],
@@ -251,6 +260,21 @@ class CitoyenController extends Controller
                 $errors[$champ] = self::MESSAGES[$champ]['match'];
             }
         }
+
+        // Contrôles en plus des règles communes (les mêmes dans citoyens-crud.js)
+        if (isset($regles['email']) && !isset($errors['email'])
+            && !preg_match('/' . self::EMAIL_MOTIF . '/D', trim($post['email'] ?? ''))) {
+            $errors['email'] = self::EMAIL_INVALIDE;
+        }
+        if (isset($regles['password'])) {
+            // validate() compare sans les espaces des bords, mais password_hash() les garde : on les refuse
+            if (!isset($errors['password']) && preg_match('/^\s|\s\z/u', $post['password'] ?? '')) {
+                $errors['password'] = self::ESPACE_AU_BORD;
+            }
+            if (!isset($errors['password_confirm']) && ($post['password_confirm'] ?? '') !== ($post['password'] ?? '')) {
+                $errors['password_confirm'] = self::MESSAGES['password_confirm']['match'];
+            }
+        }
         return $errors;
     }
 
@@ -431,10 +455,13 @@ class CitoyenController extends Controller
             return ['password_actuel' => 'Le mot de passe actuel est incorrect.'];
         }
         $stmt = $this->db->prepare("UPDATE utilisateur SET mot_de_passe = :mdp WHERE id_utilisateur = :id AND role = 'citoyen'");
-        $stmt->execute(['mdp' => password_hash($post['password'], PASSWORD_DEFAULT), 'id' => $id]);
+        $hache = password_hash($post['password'], PASSWORD_DEFAULT);
+        $stmt->execute(['mdp' => $hache, 'id' => $id]);
 
         unset($_SESSION['mdp_essais'], $_SESSION['mdp_bloque_jusqua']);
         session_regenerate_id(true);   // nouvel identifiant de session, comme à la connexion
+        // Cette session reste connectée ; AuthController ferme les autres, dont l'empreinte ne correspond plus
+        $_SESSION['mdp_empreinte'] = hash('sha256', $hache);
         return [];
     }
 
@@ -476,6 +503,11 @@ class CitoyenController extends Controller
     {
         $regles = self::PROFIL + self::CHANGEMENT;
         $html = 'data-rules="' . e($regles[$champ]) . '"';
+        if ($champ === 'email') {
+            $html .= ' data-motif="' . e(self::EMAIL_MOTIF) . '" data-message-motif="' . e(self::EMAIL_INVALIDE) . '"';
+        } elseif ($champ === 'password') {
+            $html .= ' data-message-espace="' . e(self::ESPACE_AU_BORD) . '"';
+        }
         foreach (self::MESSAGES[$champ] ?? [] as $regle => $message) {
             $html .= ' data-message-' . $regle . '="' . e($message) . '"';
         }
