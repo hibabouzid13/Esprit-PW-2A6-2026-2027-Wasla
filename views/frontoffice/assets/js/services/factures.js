@@ -121,6 +121,8 @@
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   };
   const isOverdue = (bill) => bill.status === "a_payer" && bill.due && bill.due < todayStart();
+  /* Prochaine date limite : les factures en retard sont signalées à part, jamais comme « prochaine ». */
+  const nextDue = () => state.bills.filter((b) => b.status === "a_payer" && b.due && !isOverdue(b)).sort((a, b) => a.due - b.due)[0];
 
   /* ---------- Petits morceaux d'affichage ---------- */
 
@@ -157,7 +159,7 @@
     const bills = sorted();
     const due = bills.filter((b) => b.status === "a_payer");
     const late = due.filter(isOverdue);
-    const next = due.filter((b) => b.due).sort((a, b) => a.due - b.due)[0];
+    const next = nextDue();
     const name = prenom ? ` ${S.esc(prenom)}` : "";
     const bubble = $("[data-wasel-bubble]");
     const text = $("[data-wasel-text]");
@@ -247,7 +249,7 @@
     const due = state.bills.filter((b) => b.status === "a_payer");
     const dueTotal = due.reduce((sum, b) => sum + b.amount, 0);
     const paid = state.bills.length - due.length;
-    const next = due.filter((b) => b.due).sort((a, b) => a.due - b.due)[0];
+    const next = nextDue();
     const holder = $("[data-overview-stats]");
     holder.innerHTML =
       consumptionKpi("electricite") +
@@ -408,7 +410,7 @@
     if (drop) out.push(["good", "leaf", "Bonne nouvelle", `Votre dernière facture ${S.esc(drop.b.provider)} baisse de <b>${F.number(Math.abs(drop.v.quantity), 1)} %</b> par jour. Continuez !`]);
     const due = state.bills.filter((b) => b.status === "a_payer");
     const late = due.filter(isOverdue);
-    const next = due.filter((b) => b.due && !isOverdue(b)).sort((a, b) => a.due - b.due)[0];
+    const next = nextDue();
     if (due.length) out.push(["due", "clock", "À ne pas oublier", `${plural(due.length, "facture")} à payer${late.length ? `, dont <b>${late.length} en retard</b>` : ""}.${next ? ` Prochaine date limite : <b>${S.fmt.date(next.due)}</b>.` : ""}`]);
     if (!out.length) out.push(["good", "circle-check", "Tout est en ordre", "Aucune hausse inhabituelle et aucune facture en attente de paiement."]);
     const holder = $("[data-insights]");
