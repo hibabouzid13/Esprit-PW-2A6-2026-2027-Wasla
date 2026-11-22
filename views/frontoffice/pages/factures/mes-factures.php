@@ -121,7 +121,7 @@ $tris = [
             <p class="bill-row__sub"><?= $f->getReferencePaiement() !== null ? 'Talon ' . e(FactureController::formatReference($f->getReferencePaiement(), 4)) : 'Sans talon' ?></p>
           </div>
           <div class="bill-row__col bill-row__col--opt bill-row__col--hide-sm"><span class="bill-row__label">Période</span><?= e(dateFr($f->getPeriodeDebut())) ?> → <?= e(dateFr($f->getPeriodeFin())) ?></div>
-          <div class="bill-row__col"><span class="bill-row__label">Montant · <?= e(FactureController::formatQuantite($f->getQuantite(), $f->getTypeRessource())) ?></span><span class="bill-row__amount"><?= e(FactureController::formatMontant($f->getMontant())) ?></span></div>
+          <div class="bill-row__col"><span class="bill-row__label">Montant · <span class="bill-row__qty"><?= e(FactureController::formatQuantite($f->getQuantite(), $f->getTypeRessource())) ?></span></span><span class="bill-row__amount"><?= e(FactureController::formatMontant($f->getMontant())) ?></span></div>
           <div class="bill-row__col bill-row__col--status">
             <span class="bill-row__label"><?= $echeance ? 'Échéance ' . e(dateFr($echeance)) : 'Sans échéance' ?></span>
             <span class="bill-chip <?= $payee ? 'bill-chip--paid' : ($retard ? 'bill-chip--late' : 'bill-chip--due') ?>"><?= $payee ? 'Payée' : ($retard ? 'En retard' : 'À payer') ?></span>
