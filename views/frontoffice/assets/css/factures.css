@@ -383,6 +383,8 @@
 .bill-compare__row span { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; font-size: 12.5px; color: var(--b-muted); }
 .bill-compare__row span b { color: var(--b-heading); }
 .bill-compare .bill-progress { margin-top: 0; height: 8px; }
+.bill-compare__row span b { white-space: nowrap; }
+.bill-compare__total { margin: 5px 0 0; font-size: 12px; color: var(--b-muted); }
 .bill-ui .svc-highlight, .bill-scope .svc-highlight { border-radius: 16px; }
 
 /* ---------- Champs (formulaire et filtres) ---------- */

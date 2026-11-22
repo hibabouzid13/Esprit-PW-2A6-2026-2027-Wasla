@@ -669,11 +669,13 @@
       ? `Votre consommation ${label} a ${v.quantity >= 0 ? "augmenté" : "baissé"} de <strong>${F.number(Math.abs(v.quantity), 0)} %</strong> par rapport à la facture précédente (${F.number(perDay(bill), dec)} ${u}/jour contre ${F.number(perDay(v.prev), dec)} ${u}/jour). ${v.quantity >= 0 ? "Voici les variations observées et quelques recommandations pour réduire votre consommation." : "Continuez ainsi : voici quelques pistes pour aller plus loin."}`
       : "C'est votre première facture de ce fournisseur : l'analyse comparative sera disponible dès la prochaine facture.";
 
-    const maxQ = Math.max(bill.quantity, v ? v.prev.quantity : 0) || 1;
+    // Barres par jour, comme le pourcentage et la page Détail (les périodes n'ont pas toutes la même durée)
+    const maxPerDay = Math.max(perDay(bill), v ? perDay(v.prev) : 0) || 1;
     const bar = (text, b, cls) => `
       <div class="bill-compare__row">
-        <span>${S.esc(text)} <b>${qty(b)} · ${F.money(b.amount)}</b></span>
-        <div class="bill-progress${cls}"><span data-progress="${(b.quantity / maxQ) * 100}"></span></div>
+        <span>${S.esc(text)} <b>${F.number(perDay(b), dec)} ${u}/jour</b></span>
+        <div class="bill-progress${cls}"><span data-progress="${(perDay(b) / maxPerDay) * 100}"></span></div>
+        <p class="bill-compare__total">${qty(b)} en ${days(b)} jours · ${F.money(b.amount)}</p>
       </div>`;
 
     holder.innerHTML = `
