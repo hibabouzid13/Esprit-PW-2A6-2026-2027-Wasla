@@ -8,6 +8,11 @@
 ob_start();
 $typeImpose = $scope['type'] ?? '';
 $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['statut'] !== '';
+// Logos STEG / SONEDE (images du module, recadrées par viewBox sur leur contenu pour être centrées)
+$logos = [
+    'electricite' => '<span class="bill-admin-logo bill-admin-logo--steg"><svg viewBox="25.5 13.5 186 355" aria-hidden="true" focusable="false"><image href="' . e(asset('img/factures/steg.png')) . '" width="267" height="378"/></svg></span>',
+    'eau'         => '<span class="bill-admin-logo bill-admin-logo--sonede"><svg viewBox="49.5 17.5 329 329" aria-hidden="true" focusable="false"><image href="' . e(asset('img/factures/sonede.png')) . '" width="387" height="430"/></svg></span>',
+];
 ?>
         <link rel="stylesheet" href="<?= e(asset('css/factures-admin.css', 'backoffice')) ?>">
         <div class="admin-page-head">
@@ -113,7 +118,7 @@ $filtreActif = $filters['q'] !== '' || $filters['type'] !== '' || $filters['stat
 <?php endif; ?>
                   </td>
                   <td class="bill-client" data-label="Citoyen"><?= e($f->getNomClient()) ?><small><?= e($f->getEmailClient()) ?></small></td>
-                  <td class="bill-nowrap" data-label="Fournisseur"><span class="admin-badge <?= $f->getTypeRessource() === 'eau' ? 'admin-badge--ok' : 'admin-badge--info' ?>"><?= e(FactureController::typeLabel($f->getTypeRessource())) ?></span></td>
+                  <td class="bill-nowrap" data-label="Fournisseur"><span class="bill-admin-provider"><?= $logos[$f->getTypeRessource()] ?? "" ?><span class="admin-badge <?= $f->getTypeRessource() === 'eau' ? 'admin-badge--ok' : 'admin-badge--info' ?>" title="<?= e(FactureController::typeLabel($f->getTypeRessource())) ?>"><?= e(FactureController::fournisseur($f->getTypeRessource())) ?></span></span></td>
                   <td class="bill-period" data-label="Période"><span><?= e(dateFr($f->getPeriodeDebut())) ?></span><span>→ <?= e(dateFr($f->getPeriodeFin())) ?></span></td>
                   <td class="bill-nowrap" data-label="Consommation"><?= e(FactureController::formatQuantite($f->getQuantite(), $f->getTypeRessource())) ?></td>
                   <td class="bill-amount" data-label="Montant"><?= e(FactureController::formatMontant($f->getMontant())) ?></td>
