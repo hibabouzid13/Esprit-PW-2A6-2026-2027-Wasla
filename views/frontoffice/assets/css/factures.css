@@ -386,6 +386,9 @@
 .bill-compare__row span b { color: var(--b-heading); }
 .bill-compare .bill-progress { margin-top: 0; height: 8px; }
 .bill-compare__row span b { white-space: nowrap; }
+/* Notes sous les barres et sous la fiche : séparées de ce qui les entoure */
+.bill-compare + .field__hint { margin-top: 14px; }
+.bill-facts + .field__hint { margin: 12px 0 20px; }
 .bill-compare__total { margin: 5px 0 0; font-size: 12px; color: var(--b-muted); }
 .bill-ui .svc-highlight, .bill-scope .svc-highlight { border-radius: 16px; }
 
