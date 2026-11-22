@@ -448,8 +448,9 @@
         <div class="bill-fact"><dt>Consommation</dt><dd>${qty(bill)}</dd></div>
         <div class="bill-fact"><dt>Talon</dt><dd data-no-i18n${bill.refPaie ? "" : ' class="bill-muted"'}>${bill.refPaie ? S.esc(group(bill.refPaie, 4)) : "Non renseigné"}</dd></div>
         <div class="bill-fact"><dt>Date limite</dt><dd${bill.due ? "" : ' class="bill-muted"'}>${bill.due ? S.fmt.date(bill.due) : "Non renseignée"}</dd></div>
-        <div class="bill-fact"><dt>Variation*</dt><dd>${v ? deltaHtml(v.quantity) : '<span class="bill-muted">—</span>'}</dd></div>
+        <div class="bill-fact"><dt>Variation${v ? "*" : ""}</dt><dd>${v ? deltaHtml(v.quantity) : '<span class="bill-muted">—</span>'}</dd></div>
       </dl>
+      ${v ? '<p class="field__hint">* Variation de la consommation moyenne par jour par rapport à la facture précédente du même fournisseur.</p>' : ""}
       <h3 class="bill-step__lead">Décomposition estimée (tarifs de référence indicatifs)</h3>
       <table class="bill-breakdown">
         <tbody>

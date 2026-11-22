@@ -118,6 +118,7 @@ $prenom = $user->getPrenom();
           <button class="bill-btn bill-btn--glass" type="button" data-goto-tab="bills">Toutes mes factures<span data-icon="arrow-right"></span></button>
         </div>
         <ul class="bill-rows" data-recent-rows></ul>
+        <p class="bill-chart-note bill-row-note">* Variation de la consommation moyenne par jour par rapport à la facture précédente du même fournisseur.</p>
 
         <div class="bill-list-head">
           <div>

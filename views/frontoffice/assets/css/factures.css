@@ -537,7 +537,7 @@
   .bill-charts, .bill-assist, .bill-detail { grid-template-columns: 1fr; }
   .bill-insights { grid-template-columns: 1fr; }
   .bill-row { grid-template-columns: auto minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)) auto; }
-  .bill-row__col--opt { display: none; }
+  .bill-row__col--opt, .bill-row-note { display: none; }
 }
 @media (max-width: 760px) {
   .bill-summary { grid-template-columns: 1fr; }
