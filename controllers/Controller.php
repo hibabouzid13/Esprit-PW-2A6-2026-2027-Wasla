@@ -61,7 +61,9 @@ abstract class Controller
                 }
 
                 $message = match ($name) {
-                    'required' => $value === '' ? 'Ce champ est obligatoire.' : null,
+                    // seulement des espaces (insécables comprises) = vide, comme trim() en JavaScript
+                    'required' => $value === '' || preg_match('/^[\s\x{FEFF}]*\z/u', $value) === 1
+                                  ? 'Ce champ est obligatoire.' : null,
                     'email'    => preg_match(self::EMAIL, $value) && mb_strlen($value) <= 150
                                   ? null : 'Veuillez saisir une adresse e-mail valide.',
                     'name'     => preg_match("/^[\\p{L}][\\p{L}' -]{1,49}$/u", $value)
