@@ -15,7 +15,7 @@ $logos = [
 ];
 ?>
         <link rel="stylesheet" href="<?= e(asset('css/factures-admin.css', 'backoffice')) ?>">
-        <div class="admin-page-head">
+        <div class="admin-page-head bill-admin-head">
           <div>
             <nav class="admin-breadcrumb" aria-label="Fil d'Ariane">
               <a href="<?= url('dashboard') ?>">Tableau de bord</a><span>/</span><span>Factures &amp; consommation</span>

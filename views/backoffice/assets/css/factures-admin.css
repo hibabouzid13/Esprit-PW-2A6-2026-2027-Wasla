@@ -56,7 +56,11 @@ fieldset.admin-field legend {
   padding: 0;
 }
 
-/* En-tête du formulaire : un nom ou un e-mail très long passe à la ligne au lieu d'élargir la page. */
+/* En-tête (liste et formulaire) : l'icône reste carrée, les textes longs passent à la ligne. */
+.bill-admin-head .admin-page-head__icon {
+  flex: none;
+}
+
 .bill-admin-head .admin-page-head__title > div {
   min-width: 0;
 }
@@ -195,6 +199,17 @@ fieldset.admin-field legend {
     grid-column: -2 / -1;
     justify-self: end;
   }
+
+  /* Cartes : le talon et le fournisseur passent à la ligne au lieu de déborder sur la colonne voisine */
+  .bill-admin-table td.bill-refs,
+  .bill-admin-table .bill-refs small {
+    white-space: normal;
+  }
+
+  .bill-admin-table .bill-admin-provider {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
 }
 
 @media (max-width: 720px) {
@@ -210,6 +225,11 @@ fieldset.admin-field legend {
 
   .bill-admin-table tr {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Téléphone : les références prennent toute la largeur (talon sur une ligne) */
+  .bill-admin-table td.bill-refs {
+    grid-column: 1 / -1;
   }
 }
 
