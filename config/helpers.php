@@ -134,3 +134,20 @@ function invalidClass(array $errors, string $name): string
 {
     return isset($errors[$name]) ? ' is-invalid' : '';
 }
+
+/**
+ * Page « Mon profil » du rôle (créée par le module responsable), ou null tant qu'elle n'existe pas :
+ * le lien apparaît tout seul quand la route est fusionnée.
+ */
+function profilRoute(UserModel $user): ?string
+{
+    $action = [
+        'citoyen'     => 'mon-profil',
+        'entreprise'  => 'profil-entreprise',
+        'fournisseur' => 'profil-fournisseur',
+        'admin'       => 'admin-profil',
+        'steg'        => 'admin-profil',
+        'sonede'      => 'admin-profil',
+    ][$user->getRole()] ?? '';
+    return $action !== '' && routeExists($action) ? $action : null;
+}

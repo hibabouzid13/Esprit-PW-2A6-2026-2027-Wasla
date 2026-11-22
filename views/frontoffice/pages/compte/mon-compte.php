@@ -22,6 +22,9 @@ $isAdmin = AuthController::isBackOffice($user);
             <p>Retrouvez ici l'état du réseau dans votre gouvernorat, vos analyses et les services WASLA.</p>
           </div>
           <div class="page-hero__actions">
+<?php if ($profil = profilRoute($user)): ?>
+            <a class="btn btn--secondary" href="<?= url($profil) ?>"><span data-icon="user"></span> Modifier mon profil</a>
+<?php endif; ?>
 <?php if ($isAdmin): ?>
             <a class="btn btn--primary" href="<?= url('dashboard') ?>"><span data-icon="settings"></span> Administration</a>
 <?php endif; ?>
@@ -48,6 +51,7 @@ $isAdmin = AuthController::isBackOffice($user);
             <div><dt>Adresse e-mail</dt><dd data-no-i18n><?= e($user->getEmail()) ?></dd></div>
             <div><dt>Téléphone</dt><dd><?= e($user->getTelephone() ?: '—') ?></dd></div>
             <div><dt>Gouvernorat</dt><dd><?= e($user->getNomZone() ?? '—') ?></dd></div>
+            <div><dt>Adresse</dt><dd data-no-i18n><?= e($user->getAdresse() ?: '—') ?></dd></div>
             <div><dt>Membre depuis</dt><dd><?= e(dateFr($user->getDateInscription())) ?></dd></div>
             <div><dt>Dernière connexion</dt><dd><?= e(dateFr($user->getDerniereConnexion(), true)) ?></dd></div>
 <?php if ($user->getNomOrganisation() !== null): ?>
