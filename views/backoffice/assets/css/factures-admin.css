@@ -82,9 +82,18 @@ fieldset.admin-field legend {
 }
 
 @media (max-width: 720px) {
+  .admin-form .admin-form__actions {
+    flex-wrap: wrap;
+  }
+
+  /* « auto » : le bouton garde la place de son icône, et passe à la ligne sur un très petit écran */
   .admin-form .admin-form__actions .admin-btn {
-    flex: 1 1 0;
+    flex: 1 1 auto;
     justify-content: center;
+  }
+
+  .admin-form .admin-form__actions .admin-btn [data-icon] {
+    flex: none;
   }
 }
 
