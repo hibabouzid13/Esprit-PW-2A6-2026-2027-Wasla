@@ -233,6 +233,7 @@ return [
         $user = AuthController::currentUser();
         $errors = [];
         $errorsMdp = [];
+        $errorsSuppression = [];
         $old = CitoyenController::toForm($user);
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors = (new CitoyenController())->updateProfil($user->getIdUtilisateur(), $_POST);
@@ -244,6 +245,7 @@ return [
             $old = CitoyenController::postedForm($_POST);
         }
         $gouvernorats = (new ZoneController())->getGouvernorats();
+        $aDesDonnees = (new CitoyenController())->donneesLiees($user->getIdUtilisateur()) !== [];
         require __DIR__ . '/../views/frontoffice/pages/citoyens/mon-profil.php';
     },
 
@@ -256,6 +258,7 @@ return [
         }
         $user = AuthController::currentUser();
         $errors = [];
+        $errorsSuppression = [];
         $errorsMdp = (new CitoyenController())->changerMotDePasse($user->getIdUtilisateur(), $_POST);
         if ($errorsMdp === []) {
             AuthController::flash('success', 'Mot de passe modifié.');
@@ -264,6 +267,34 @@ return [
         }
         $old = CitoyenController::toForm($user);
         $gouvernorats = (new ZoneController())->getGouvernorats();
+        $aDesDonnees = (new CitoyenController())->donneesLiees($user->getIdUtilisateur()) !== [];
+        require __DIR__ . '/../views/frontoffice/pages/citoyens/mon-profil.php';
+    },
+
+    // Suppression de SON compte : POST uniquement, mot de passe obligatoire
+    'supprimer-mon-compte' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . url('mon-profil'));
+            exit;
+        }
+        $user = AuthController::currentUser();
+        $ctrl = new CitoyenController();
+        ['errors' => $errorsSuppression, 'supprime' => $supprime] = $ctrl->supprimerSonCompte($user->getIdUtilisateur(), $_POST);
+        if ($errorsSuppression === []) {
+            (new AuthController())->logout();
+            session_start();   // nouvelle session vide, pour le message
+            AuthController::flash('success', $supprime
+                ? 'Votre compte a été supprimé.'
+                : 'Votre compte a été désactivé. Vos données sont conservées : seul un administrateur peut le réactiver.');
+            header('Location: ' . url('connexion'));
+            exit;
+        }
+        $errors = [];
+        $errorsMdp = [];
+        $old = CitoyenController::toForm($user);
+        $gouvernorats = (new ZoneController())->getGouvernorats();
+        $aDesDonnees = $ctrl->donneesLiees($user->getIdUtilisateur()) !== [];
         require __DIR__ . '/../views/frontoffice/pages/citoyens/mon-profil.php';
     },
 

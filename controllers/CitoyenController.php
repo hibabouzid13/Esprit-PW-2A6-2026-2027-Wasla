@@ -36,6 +36,9 @@ class CitoyenController extends Controller
         'password_confirm' => 'required|match:password',
     ];
 
+    /** Suppression de son propre compte : le mot de passe est demandé. */
+    public const SUPPRESSION = ['suppression_mot_de_passe' => 'required'];
+
     /** Changement de mot de passe : l'actuel est demandé en plus. */
     public const CHANGEMENT = ['password_actuel' => 'required'] + self::MOT_DE_PASSE;
 
@@ -56,6 +59,7 @@ class CitoyenController extends Controller
         'id_zone'          => ['required' => 'Choisissez le gouvernorat.'],
         'password_actuel'  => ['required' => 'Indiquez le mot de passe actuel.'],
         'email_mot_de_passe' => ['required' => "Indiquez votre mot de passe actuel pour changer d'adresse e-mail."],
+        'suppression_mot_de_passe' => ['required' => 'Indiquez votre mot de passe pour supprimer le compte.'],
         'password'         => ['required' => 'Choisissez un mot de passe.'],
         'password_confirm' => ['required' => 'Confirmez le mot de passe.', 'match' => 'Les mots de passe ne correspondent pas.'],
     ];
@@ -482,6 +486,46 @@ class CitoyenController extends Controller
     }
 
     /**
+     * Le citoyen supprime SON compte. Sans donnée : le compte est supprimé. Avec des données : il est
+     * désactivé (statut « suspendu »), et seul le super admin peut le réactiver.
+     * @return array{errors: array<string, string>, supprime: bool} supprime = false : compte désactivé
+     */
+    public function supprimerSonCompte(int $id, array $post): array
+    {
+        $citoyen = $this->find($id);
+        if ($citoyen === null) {
+            return ['errors' => ['form' => self::INTROUVABLE], 'supprime' => false];
+        }
+        $errors = $this->controler($post, self::SUPPRESSION);
+        if ($errors === [] && ($erreur = $this->verifierActuel($citoyen, $post['suppression_mot_de_passe'])) !== null) {
+            $errors = ['suppression_mot_de_passe' => $erreur];
+        }
+        if ($errors !== []) {
+            return ['errors' => $errors, 'supprime' => false];
+        }
+
+        $lienInconnu = $this->lienInconnu();   // table inconnue : on désactive, on ne supprime pas
+        $this->db->beginTransaction();
+        try {
+            $stmt = $this->db->prepare("SELECT id_utilisateur FROM utilisateur WHERE id_utilisateur = :id AND role = 'citoyen' FOR UPDATE");
+            $stmt->execute(['id' => $id]);
+            $stmt->fetchAll();
+            $supprime = !$lienInconnu && $this->donneesLiees($id) === [];
+            $stmt = $this->db->prepare($supprime
+                ? "DELETE FROM utilisateur WHERE id_utilisateur = :id AND role = 'citoyen'"
+                : "UPDATE utilisateur SET statut_compte = 'suspendu' WHERE id_utilisateur = :id AND role = 'citoyen'");
+            $stmt->execute(['id' => $id]);
+            $this->db->commit();
+            return ['errors' => [], 'supprime' => $supprime];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    /**
      * Le citoyen change SON mot de passe : il doit connaître l'actuel.
      * @return array<string, string> erreurs (vide = mot de passe changé)
      */
@@ -548,7 +592,7 @@ class CitoyenController extends Controller
     /** Attributs data-rules et data-message-* d'un champ : le navigateur reçoit les règles de PHP. */
     public static function attributs(string $champ): string
     {
-        $regles = self::PROFIL + self::CHANGEMENT;
+        $regles = self::PROFIL + self::CHANGEMENT + self::SUPPRESSION;
         $html = 'data-rules="' . e($regles[$champ]) . '"';
         if ($champ === 'email') {
             $html .= ' data-motif="' . e(self::EMAIL_MOTIF) . '" data-message-motif="' . e(self::EMAIL_INVALIDE) . '"';

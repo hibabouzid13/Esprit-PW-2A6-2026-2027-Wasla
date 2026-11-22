@@ -1,8 +1,9 @@
 <?php
 /**
  * Vue : « Mon profil » du citoyen — Front Office — Module 2 (Hiba).
- * Deux formulaires : informations (action mon-profil) et mot de passe (action mon-mot-de-passe).
- * Variables reçues : $old (valeurs), $errors (profil), $errorsMdp (mot de passe), $gouvernorats (ZoneModel[]).
+ * Trois formulaires : informations (mon-profil), mot de passe (mon-mot-de-passe), suppression (supprimer-mon-compte).
+ * Variables reçues : $user, $old (valeurs), $errors (profil), $errorsMdp (mot de passe), $errorsSuppression,
+ *                    $aDesDonnees (true = désactivation au lieu d'une suppression), $gouvernorats (ZoneModel[]).
  * Validation : validation.js (règles fournies par CitoyenController) puis CitoyenController en PHP.
  */
 ob_start();
@@ -124,6 +125,32 @@ $attr = fn (array $erreurs, string $k, string $aide = ''): string => CitoyenCont
         <div class="bill-wizard__foot">
           <span class="bill-wizard__end">
             <button class="bill-btn bill-btn--glow" type="submit" data-loading="Enregistrement…"><span data-icon="lock"></span>Changer mon mot de passe</button>
+          </span>
+        </div>
+      </form>
+
+      <form class="bill-wizard bill-wizard--full bill-glass" method="post" action="<?= url('supprimer-mon-compte') ?>" data-validate data-citoyen-form
+            data-confirm-apres="<?= $aDesDonnees ? 'Désactiver votre compte ? Vous serez déconnecté et ne pourrez plus vous connecter.' : 'Supprimer définitivement votre compte ? Cette action est irréversible.' ?>">
+        <?= csrfField() ?>
+<?php if ($errorsSuppression !== []): ?>
+        <div class="form-alert form-alert--error" role="alert"><?= e($errorsSuppression['form'] ?? 'Veuillez corriger les champs indiqués.') ?></div>
+<?php endif; ?>
+        <fieldset class="bill-step">
+          <legend>Supprimer mon compte</legend>
+          <p class="bill-step__lead"><?= $aDesDonnees
+              ? 'Votre compte a des données : il sera désactivé et ses données seront conservées. Seul un administrateur pourra le réactiver.'
+              : 'Votre compte ne contient aucune donnée : il sera supprimé définitivement.' ?></p>
+          <div class="bill-step__fields">
+            <div class="field">
+              <label for="profil-suppression_mot_de_passe">Votre mot de passe</label>
+              <input class="input<?= invalidClass($errorsSuppression, 'suppression_mot_de_passe') ?>" id="profil-suppression_mot_de_passe" name="suppression_mot_de_passe" type="password" autocomplete="current-password" <?= $attr($errorsSuppression, 'suppression_mot_de_passe') ?>>
+              <?= $msg($errorsSuppression, 'suppression_mot_de_passe') ?>
+            </div>
+          </div>
+        </fieldset>
+        <div class="bill-wizard__foot">
+          <span class="bill-wizard__end">
+            <button class="bill-btn bill-btn--danger" type="submit"><span data-icon="trash"></span><?= $aDesDonnees ? 'Désactiver mon compte' : 'Supprimer mon compte' ?></button>
           </span>
         </div>
       </form>
