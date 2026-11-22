@@ -47,7 +47,7 @@ $ex = [
 <?php if (!$edition): ?>
                 <div class="admin-field admin-field--full<?= $err('id_utilisateur') ?>">
                   <label for="id_utilisateur">Citoyen titulaire <span class="req" aria-hidden="true">*</span></label>
-                  <select class="admin-select" id="id_utilisateur" name="id_utilisateur" data-rules="required|int" data-message-required="Choisissez le citoyen titulaire de la facture.">
+                  <select class="admin-select" id="id_utilisateur" name="id_utilisateur" data-rules="required|int" data-message-required="<?= e(FactureController::MESSAGES['id_utilisateur']['required']) ?>">
                     <option value="">— Choisir un citoyen —</option>
 <?php foreach ($citoyens as $c): ?>
                     <option value="<?= $c->getIdUtilisateur() ?>"<?= $old['id_utilisateur'] === (string) $c->getIdUtilisateur() ? ' selected' : '' ?>><?= e($c->getPrenom() . ' ' . $c->getNom() . ' — ' . $c->getEmail()) ?></option>
@@ -64,7 +64,7 @@ $ex = [
                   <input type="hidden" name="type_ressource" value="<?= e($typeImpose) ?>">
                   <input class="admin-input" id="type_ressource" type="text" value="<?= e(FactureController::typeLabel($typeImpose)) ?>" readonly>
 <?php else: ?>
-                  <select class="admin-select" id="type_ressource" name="type_ressource" data-rules="required|in:electricite,eau" data-message-required="Choisissez le fournisseur.">
+                  <select class="admin-select" id="type_ressource" name="type_ressource" data-rules="required|in:electricite,eau" data-message-required="<?= e(FactureController::MESSAGES['type_ressource']['required']) ?>">
                     <option value="">— Choisir —</option>
 <?php foreach (FactureModel::TYPES as $t): ?>
                     <option value="<?= $t ?>"<?= $old['type_ressource'] === $t ? ' selected' : '' ?>><?= e(FactureController::typeLabel($t)) ?></option>
@@ -78,7 +78,7 @@ $ex = [
                   <label for="reference_abonnement">Référence d'abonnement <span class="req" aria-hidden="true">*</span></label>
                   <input class="admin-input" id="reference_abonnement" name="reference_abonnement" type="text" inputmode="numeric" autocomplete="off"
                          value="<?= e($old['reference_abonnement']) ?>" placeholder="<?= e($ex[0]) ?>" aria-describedby="abo-hint"
-                         data-rules="required" data-message-required="Indiquez la référence d'abonnement (en haut de la facture).">
+                         data-rules="required" data-message-required="<?= e(FactureController::MESSAGES['reference_abonnement']['required']) ?>">
                   <p class="admin-field__hint" id="abo-hint" data-bill-abo-hint><?= e($ex[2]) ?></p>
                   <?= $msg('reference_abonnement') ?>
                 </div>
@@ -94,28 +94,28 @@ $ex = [
                 <div class="admin-field<?= $err('periode_debut') ?>">
                   <label for="periode_debut">Début de la période <span class="req" aria-hidden="true">*</span></label>
                   <input class="admin-input" id="periode_debut" name="periode_debut" type="date" value="<?= e($old['periode_debut']) ?>"
-                         data-rules="required|date" data-message-required="Indiquez le début de la période.">
+                         data-rules="required|date" data-message-required="<?= e(FactureController::MESSAGES['periode_debut']['required']) ?>">
                   <?= $msg('periode_debut') ?>
                 </div>
 
                 <div class="admin-field<?= $err('periode_fin') ?>">
                   <label for="periode_fin">Fin de la période <span class="req" aria-hidden="true">*</span></label>
                   <input class="admin-input" id="periode_fin" name="periode_fin" type="date" value="<?= e($old['periode_fin']) ?>"
-                         data-rules="required|date" data-message-required="Indiquez la fin de la période.">
+                         data-rules="required|date" data-message-required="<?= e(FactureController::MESSAGES['periode_fin']['required']) ?>">
                   <?= $msg('periode_fin') ?>
                 </div>
 
                 <div class="admin-field<?= $err('quantite') ?>">
                   <label for="quantite">Consommation (<span data-bill-unit><?= $unite ?></span>) <span class="req" aria-hidden="true">*</span></label>
                   <input class="admin-input" id="quantite" name="quantite" type="text" autocomplete="off" value="<?= e($old['quantite']) ?>" placeholder="ex. <?= $exQte ?>"
-                         data-rules="required|max:20" data-message-required="Indiquez la consommation." data-message-max="Valeur trop longue.">
+                         data-rules="required|max:20" data-message-required="<?= e(FactureController::MESSAGES['quantite']['required']) ?>" data-message-max="<?= e(FactureController::MESSAGES['quantite']['max']) ?>">
                   <?= $msg('quantite') ?>
                 </div>
 
                 <div class="admin-field<?= $err('montant') ?>">
                   <label for="montant">Montant (TND) <span class="req" aria-hidden="true">*</span></label>
                   <input class="admin-input" id="montant" name="montant" type="text" autocomplete="off" value="<?= e($old['montant']) ?>" placeholder="ex. 500 ou 500 TND"
-                         data-rules="required|max:20" data-message-required="Indiquez le montant." data-message-max="Valeur trop longue.">
+                         data-rules="required|max:20" data-message-required="<?= e(FactureController::MESSAGES['montant']['required']) ?>" data-message-max="<?= e(FactureController::MESSAGES['montant']['max']) ?>">
                   <?= $msg('montant') ?>
                 </div>
 
@@ -131,7 +131,7 @@ $ex = [
                   <div class="admin-choices">
 <?php foreach (FactureModel::STATUTS as $s): ?>
                     <label class="admin-choice">
-                      <input type="radio" name="statut" value="<?= $s ?>"<?= $old['statut'] === $s ? ' checked' : '' ?> data-rules="required|in:a_payer,payee" data-message-required="Choisissez le statut.">
+                      <input type="radio" name="statut" value="<?= $s ?>"<?= $old['statut'] === $s ? ' checked' : '' ?> data-rules="required|in:a_payer,payee" data-message-required="<?= e(FactureController::MESSAGES['statut']['required']) ?>">
                       <span><?= e(FactureController::statutLabel($s)) ?></span>
                     </label>
 <?php endforeach; ?>

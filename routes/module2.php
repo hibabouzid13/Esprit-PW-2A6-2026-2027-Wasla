@@ -196,7 +196,7 @@ return [
                 $ids = array_map(fn ($c) => $c->getIdUtilisateur(), $ctrl->getCitoyens());
                 $errors = in_array($idCitoyen, $ids, true)
                     ? $ctrl->create($_POST, $idCitoyen, $scope)
-                    : ['id_utilisateur' => 'Choisissez le citoyen titulaire de la facture.'];
+                    : ['id_utilisateur' => FactureController::MESSAGES['id_utilisateur']['required']];
             }
             if ($errors === []) {
                 AuthController::flash('success', $facture !== null ? 'Facture modifiée.' : 'Facture ajoutée.');

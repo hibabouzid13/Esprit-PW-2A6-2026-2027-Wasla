@@ -34,6 +34,21 @@ class FactureController extends Controller
         'statut'         => 'required|in:a_payer,payee',
     ];
 
+    /**
+     * Messages des règles de base : source unique pour PHP (check) et pour JavaScript
+     * (attributs data-message-* des formulaires Front Office et Back Office).
+     */
+    public const MESSAGES = [
+        'id_utilisateur'       => ['required' => 'Choisissez le citoyen titulaire de la facture.'],
+        'type_ressource'       => ['required' => 'Choisissez le fournisseur.'],
+        'reference_abonnement' => ['required' => "Indiquez la référence d'abonnement (en haut de la facture)."],
+        'periode_debut'        => ['required' => 'Indiquez le début de la période facturée.'],
+        'periode_fin'          => ['required' => 'Indiquez la fin de la période facturée.'],
+        'quantite'             => ['required' => 'Indiquez la consommation facturée.', 'max' => 'Valeur trop longue.'],
+        'montant'              => ['required' => 'Indiquez le montant à payer.', 'max' => 'Valeur trop longue.'],
+        'statut'               => ['required' => 'Choisissez le statut.'],
+    ];
+
     /** Tri autorisé : clé reçue dans l'URL → ORDER BY (jamais la valeur de l'utilisateur dans le SQL). */
     public const TRIS = [
         'recentes'       => 'f.periode_debut DESC, f.id_facture DESC',
@@ -266,6 +281,12 @@ class FactureController extends Controller
         $errors = $this->validate($post, self::RULES);
         $v = fn (string $k): string => trim((string) ($post[$k] ?? ''));
         $type = isset($errors['type_ressource']) ? '' : $v('type_ressource');
+        // Controller::validate() renvoie des messages génériques : on met ceux du formulaire
+        foreach (self::MESSAGES as $champ => $messages) {
+            if (isset($errors[$champ])) {
+                $errors[$champ] = $v($champ) === '' ? $messages['required'] : ($messages['max'] ?? $errors[$champ]);
+            }
+        }
 
         // ---- Références d'abonnement et de paiement (format selon le fournisseur)
         $errors += self::referencesErrors($v('reference_abonnement'), $v('reference_paiement'), $type);
@@ -336,7 +357,7 @@ class FactureController extends Controller
         ];
         $errors = [];
         if ($abonnement === '') {
-            $errors['reference_abonnement'] = "Indiquez la référence d'abonnement (en haut de la facture).";
+            $errors['reference_abonnement'] = self::MESSAGES['reference_abonnement']['required'];
         }
         $valeurs = ['reference_abonnement' => [$abonnement, 'abonnement'], 'reference_paiement' => [$paiement, 'paiement']];
         foreach ($valeurs as $champ => [$valeur, $cle]) {
