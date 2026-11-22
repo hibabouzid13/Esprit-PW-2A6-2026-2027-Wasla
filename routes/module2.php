@@ -235,7 +235,7 @@ return [
         $errorsMdp = [];
         $old = CitoyenController::toForm($user);
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $errors = (new CitoyenController())->update($user->getIdUtilisateur(), $_POST);
+            $errors = (new CitoyenController())->updateProfil($user->getIdUtilisateur(), $_POST);
             if ($errors === []) {
                 AuthController::flash('success', 'Profil modifié.');
                 header('Location: ' . url('mon-profil'));

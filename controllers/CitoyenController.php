@@ -55,6 +55,7 @@ class CitoyenController extends Controller
         'email'            => ['required' => "Indiquez l'adresse e-mail."],
         'id_zone'          => ['required' => 'Choisissez le gouvernorat.'],
         'password_actuel'  => ['required' => 'Indiquez le mot de passe actuel.'],
+        'email_mot_de_passe' => ['required' => "Indiquez votre mot de passe actuel pour changer d'adresse e-mail."],
         'password'         => ['required' => 'Choisissez un mot de passe.'],
         'password_confirm' => ['required' => 'Confirmez le mot de passe.', 'match' => 'Les mots de passe ne correspondent pas.'],
     ];
@@ -383,6 +384,59 @@ class CitoyenController extends Controller
         ]);
     }
 
+    /**
+     * Le citoyen modifie SON profil. L'e-mail sert à se connecter : pour le changer, le mot de passe est demandé.
+     * @return array<string, string> erreurs (vide = profil modifié)
+     */
+    public function updateProfil(int $id, array $post): array
+    {
+        $citoyen = $this->find($id);
+        if ($citoyen === null) {
+            return ['form' => self::INTROUVABLE];
+        }
+        $errors = $this->controlerProfil($post, self::PROFIL, $id);
+        $email = self::texte($post['email'] ?? '');
+        if ($email !== null && mb_strtolower(trim($email)) !== mb_strtolower($citoyen->getEmail())) {
+            $mdp = self::texte($post['email_mot_de_passe'] ?? '');
+            if ($mdp === null) {
+                $errors['email_mot_de_passe'] = 'Valeur non autorisée.';
+            } elseif ($mdp === '') {
+                $errors['email_mot_de_passe'] = self::MESSAGES['email_mot_de_passe']['required'];
+            } elseif ($errors === [] && ($erreur = $this->verifierActuel($citoyen, $mdp)) !== null) {
+                $errors['email_mot_de_passe'] = $erreur;
+            }
+        }
+        return $errors !== [] ? $errors : $this->update($id, $post);
+    }
+
+    /** Secondes à attendre après trop de mauvais mots de passe (0 = aucun blocage). */
+    private function attente(): int
+    {
+        return max(0, (int) ($_SESSION['mdp_bloque_jusqua'] ?? 0) - time());
+    }
+
+    /**
+     * Vérifie le mot de passe actuel : un seul compteur d'essais pour e-mail, mot de passe et suppression.
+     * @return string|null message d'erreur (null = correct)
+     */
+    private function verifierActuel(UserModel $citoyen, string $motDePasse): ?string
+    {
+        if (($reste = $this->attente()) > 0) {
+            return "Trop de tentatives. Réessayez dans $reste secondes.";
+        }
+        if (password_verify($motDePasse, $citoyen->getMotDePasse())) {
+            unset($_SESSION['mdp_essais'], $_SESSION['mdp_bloque_jusqua']);
+            return null;
+        }
+        $essais = (int) ($_SESSION['mdp_essais'] ?? 0) + 1;
+        if ($essais >= self::ESSAIS_MAX) {
+            $_SESSION['mdp_bloque_jusqua'] = time() + self::BLOCAGE_SECONDES;
+            $essais = 0;
+        }
+        $_SESSION['mdp_essais'] = $essais;
+        return 'Le mot de passe actuel est incorrect.';
+    }
+
     /** Suspend ou réactive. Un compte suspendu est déconnecté à sa requête suivante (AuthController). */
     public function changerStatut(int $id, string $statut): bool
     {
@@ -437,7 +491,7 @@ class CitoyenController extends Controller
         if ($citoyen === null) {
             return ['form' => self::INTROUVABLE];
         }
-        $reste = (int) ($_SESSION['mdp_bloque_jusqua'] ?? 0) - time();
+        $reste = $this->attente();
         if ($reste > 0) {
             return ['password_actuel' => "Trop de tentatives. Réessayez dans $reste secondes."];
         }
@@ -445,20 +499,13 @@ class CitoyenController extends Controller
         if ($errors !== []) {
             return $errors;
         }
-        if (!password_verify($post['password_actuel'], $citoyen->getMotDePasse())) {
-            $essais = (int) ($_SESSION['mdp_essais'] ?? 0) + 1;
-            if ($essais >= self::ESSAIS_MAX) {
-                $_SESSION['mdp_bloque_jusqua'] = time() + self::BLOCAGE_SECONDES;
-                $essais = 0;
-            }
-            $_SESSION['mdp_essais'] = $essais;
-            return ['password_actuel' => 'Le mot de passe actuel est incorrect.'];
+        if (($erreur = $this->verifierActuel($citoyen, $post['password_actuel'])) !== null) {
+            return ['password_actuel' => $erreur];
         }
         $stmt = $this->db->prepare("UPDATE utilisateur SET mot_de_passe = :mdp WHERE id_utilisateur = :id AND role = 'citoyen'");
         $hache = password_hash($post['password'], PASSWORD_DEFAULT);
         $stmt->execute(['mdp' => $hache, 'id' => $id]);
 
-        unset($_SESSION['mdp_essais'], $_SESSION['mdp_bloque_jusqua']);
         session_regenerate_id(true);   // nouvel identifiant de session, comme à la connexion
         // Cette session reste connectée ; AuthController ferme les autres, dont l'empreinte ne correspond plus
         $_SESSION['mdp_empreinte'] = hash('sha256', $hache);

@@ -53,8 +53,14 @@ $attr = fn (array $erreurs, string $k, string $aide = ''): string => CitoyenCont
             </div>
             <div class="field">
               <label for="profil-email">Adresse e-mail</label>
-              <input class="input<?= invalidClass($errors, 'email') ?>" id="profil-email" name="email" type="text" inputmode="email" autocomplete="email" value="<?= e($old['email']) ?>" <?= $attr($errors, 'email') ?>>
+              <input class="input<?= invalidClass($errors, 'email') ?>" id="profil-email" name="email" type="text" inputmode="email" autocomplete="email" value="<?= e($old['email']) ?>" data-actuel="<?= e($user->getEmail()) ?>" <?= $attr($errors, 'email') ?>>
               <?= $msg($errors, 'email') ?>
+            </div>
+            <div class="field" data-zone-email-change>
+              <label for="profil-email_mot_de_passe">Mot de passe actuel <span class="bill-optional">— si vous changez d'adresse e-mail</span></label>
+              <input class="input<?= invalidClass($errors, 'email_mot_de_passe') ?>" id="profil-email_mot_de_passe" name="email_mot_de_passe" type="password" autocomplete="current-password"
+                     data-si-email-change data-message-required="<?= e(CitoyenController::MESSAGES['email_mot_de_passe']['required']) ?>" aria-describedby="profil-email_mot_de_passe-erreur"<?= isset($errors['email_mot_de_passe']) ? ' aria-invalid="true"' : '' ?>>
+              <?= $msg($errors, 'email_mot_de_passe') ?>
             </div>
             <div class="form-row">
               <div class="field">
