@@ -1,145 +1,57 @@
 <?php
 /**
- * Vue : formulaire d'ajout / de modification d'une facture — Front Office — Module 2 (Hiba).
+ * Vue : ajout / modification d'une facture — Front Office — Module 2 (Hiba).
  * Variables reçues : $mode ('ajout' | 'modification'), $facture (FactureModel|null),
  *                    $old (valeurs du formulaire), $errors (champ => message).
+ * Ajout : parcours guidé en 4 étapes (fournisseur, références, période et montant, statut).
+ * Modification : les mêmes champs sur une seule page.
  * Aucune validation HTML5 : validation.js + factures-crud.js dans le navigateur, puis PHP.
  */
 ob_start();
 $edition = $mode === 'modification';
 $action = $edition ? url('facture-modifier', ['id' => $facture->getIdFacture()]) : url('facture-ajouter');
-$unite = $old['type_ressource'] === 'eau' ? 'm³' : 'kWh';
-// Exemples selon le fournisseur (mis à jour par factures-crud.js quand on change de fournisseur)
-$ex = [
-    'electricite' => ['Ex : 937974800', 'Ex : 0000049937974800 (facultatif)', '9 chiffres, en haut de la facture STEG.', '16 chiffres, sur le talon en bas de la facture.'],
-    'eau'         => ['Ex : 123456789', 'Ex : 00123456789012 (facultatif)', '8 ou 9 chiffres (code district + numéro de police), en haut de la facture SONEDE.', '12 à 16 chiffres, sur le talon en bas de la facture.'],
-][$old['type_ressource']] ?? ["Choisissez d'abord le fournisseur", "Choisissez d'abord le fournisseur", 'Choisissez le fournisseur pour voir le format attendu.', 'Facultatif : talon en bas de la facture.'];
-$exQte = $old['type_ressource'] === 'eau' ? '22.5 ou 22.5 m³' : '455 ou 455 kWh';
+$retour = $edition ? url('facture-voir', ['id' => $facture->getIdFacture()]) : url('mes-factures');
 ?>
-  <main id="main">
-    <section class="page-hero">
-      <div class="container">
-        <nav class="breadcrumbs" aria-label="Fil d'Ariane">
-          <a href="<?= url('mon-compte') ?>">Mon espace</a>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="icon-dir"><path d="m9 18 6-6-6-6"/></svg>
-          <a href="<?= url('mes-factures') ?>">Mes factures</a>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="icon-dir"><path d="m9 18 6-6-6-6"/></svg>
+  <main id="main" class="bill-ui">
+<?php require __DIR__ . '/partials/sprite.php'; ?>
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Fil d'Ariane">
+        <a href="<?= url('mon-compte') ?>">Mon espace</a>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="icon-dir"><path d="m9 18 6-6-6-6"/></svg>
+        <a href="<?= url('mes-factures') ?>">Mes factures</a>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="icon-dir"><path d="m9 18 6-6-6-6"/></svg>
 <?php if ($edition): ?>
-          <a href="<?= url('facture-voir', ['id' => $facture->getIdFacture()]) ?>" data-no-i18n><?= e(FactureController::titre($facture)) ?></a>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="icon-dir"><path d="m9 18 6-6-6-6"/></svg>
+        <a href="<?= $retour ?>" data-no-i18n><?= e(FactureController::titre($facture)) ?></a>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="icon-dir"><path d="m9 18 6-6-6-6"/></svg>
 <?php endif; ?>
-          <span aria-current="page"><?= $edition ? 'Modifier' : 'Ajouter' ?></span>
-        </nav>
-        <p class="eyebrow">Module 02 · Factures &amp; consommation</p>
-        <h1><?= $edition ? 'Modifier la facture' : 'Ajouter une facture' ?></h1>
-        <p><?= $edition ? 'Corrigez les informations de votre facture.' : 'Recopiez les informations principales de votre facture STEG ou SONEDE.' ?></p>
-      </div>
-    </section>
+        <span aria-current="page"><?= $edition ? 'Modifier' : 'Ajouter' ?></span>
+      </nav>
 
-    <section class="page-section page-section--soft">
-      <div class="container">
-        <div class="card bill-form-card">
-<?php if ($errors !== []): ?>
-          <div class="form-alert form-alert--error" role="alert"><?= e($errors['form'] ?? 'Veuillez corriger les champs indiqués.') ?></div>
-<?php endif; ?>
-
-          <form class="bill-form" method="post" action="<?= $action ?>" data-validate data-bill-crud-form>
-            <?= csrfField() ?>
-
-            <div class="form-row">
-              <div class="field">
-                <label for="b-type">Fournisseur</label>
-                <select class="select<?= invalidClass($errors, 'type_ressource') ?>" id="b-type" name="type_ressource"
-                        data-rules="required|in:electricite,eau" data-message-required="Choisissez le fournisseur.">
-                  <option value="">Choisir…</option>
-<?php foreach (FactureModel::TYPES as $t): ?>
-                  <option value="<?= $t ?>"<?= $old['type_ressource'] === $t ? ' selected' : '' ?>><?= e(FactureController::typeLabel($t)) ?></option>
-<?php endforeach; ?>
-                </select>
-                <?= fieldError($errors, 'type_ressource') ?>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="field">
-                <label for="b-abo">Référence d'abonnement</label>
-                <input class="input<?= invalidClass($errors, 'reference_abonnement') ?>" id="b-abo" name="reference_abonnement" type="text"
-                       inputmode="numeric" autocomplete="off" placeholder="<?= e($ex[0]) ?>" value="<?= e($old['reference_abonnement']) ?>"
-                       data-rules="required" data-message-required="Indiquez la référence d'abonnement (en haut de la facture)."
-                       aria-describedby="b-abo-hint">
-                <p class="field__hint" id="b-abo-hint" data-bill-abo-hint><?= e($ex[2]) ?></p>
-                <?= fieldError($errors, 'reference_abonnement') ?>
-              </div>
-              <div class="field">
-                <label for="b-paie">Référence de paiement (talon) <span class="field__optional">(facultatif)</span></label>
-                <input class="input<?= invalidClass($errors, 'reference_paiement') ?>" id="b-paie" name="reference_paiement" type="text"
-                       inputmode="numeric" autocomplete="off" placeholder="<?= e($ex[1]) ?>" value="<?= e($old['reference_paiement']) ?>"
-                       aria-describedby="b-paie-hint">
-                <p class="field__hint" id="b-paie-hint" data-bill-paie-hint><?= e($ex[3]) ?></p>
-                <?= fieldError($errors, 'reference_paiement') ?>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="field">
-                <label for="b-debut">Début de la période</label>
-                <input class="input<?= invalidClass($errors, 'periode_debut') ?>" id="b-debut" name="periode_debut" type="date"
-                       value="<?= e($old['periode_debut']) ?>" data-rules="required|date" data-message-required="Indiquez le début de la période facturée.">
-                <?= fieldError($errors, 'periode_debut') ?>
-              </div>
-              <div class="field">
-                <label for="b-fin">Fin de la période</label>
-                <input class="input<?= invalidClass($errors, 'periode_fin') ?>" id="b-fin" name="periode_fin" type="date"
-                       value="<?= e($old['periode_fin']) ?>" data-rules="required|date"
-                       data-message-required="Indiquez la fin de la période facturée.">
-                <?= fieldError($errors, 'periode_fin') ?>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="field">
-                <label for="b-qte">Consommation (<span data-bill-unit><?= $unite ?></span>)</label>
-                <input class="input<?= invalidClass($errors, 'quantite') ?>" id="b-qte" name="quantite" type="text" autocomplete="off" placeholder="ex. <?= $exQte ?>"
-                       value="<?= e($old['quantite']) ?>" data-rules="required|max:20" data-message-required="Indiquez la consommation facturée."
-                       data-message-max="Valeur trop longue.">
-                <?= fieldError($errors, 'quantite') ?>
-              </div>
-              <div class="field">
-                <label for="b-montant">Montant (TND)</label>
-                <input class="input<?= invalidClass($errors, 'montant') ?>" id="b-montant" name="montant" type="text" autocomplete="off" placeholder="ex. 500 ou 500 TND"
-                       value="<?= e($old['montant']) ?>" data-rules="required|max:20" data-message-required="Indiquez le montant à payer."
-                       data-message-max="Valeur trop longue.">
-                <?= fieldError($errors, 'montant') ?>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="field">
-                <label for="b-echeance">Date limite de paiement <span class="field__optional">(facultatif)</span></label>
-                <input class="input<?= invalidClass($errors, 'date_echeance') ?>" id="b-echeance" name="date_echeance" type="date"
-                       value="<?= e($old['date_echeance']) ?>" data-rules="date">
-                <?= fieldError($errors, 'date_echeance') ?>
-              </div>
-              <fieldset class="field svc-fieldset">
-                <legend>Statut</legend>
-                <div class="svc-radio-row">
-<?php foreach (FactureModel::STATUTS as $s): ?>
-                  <label class="svc-radio"><input type="radio" name="statut" value="<?= $s ?>"<?= $old['statut'] === $s ? ' checked' : '' ?>
-                         data-rules="required|in:a_payer,payee" data-message-required="Choisissez le statut."><span><?= e(FactureController::statutLabel($s)) ?></span></label>
-<?php endforeach; ?>
-                </div>
-                <?= fieldError($errors, 'statut') ?>
-              </fieldset>
-            </div>
-
-            <div class="svc-actions bill-form__actions">
-              <a class="btn btn--ghost" href="<?= $edition ? url('facture-voir', ['id' => $facture->getIdFacture()]) : url('mes-factures') ?>">Annuler</a>
-              <button class="btn btn--primary" type="submit" data-loading="Enregistrement…"><?= $edition ? 'Enregistrer les modifications' : 'Ajouter la facture' ?></button>
-            </div>
-          </form>
+      <header class="bill-head">
+        <div>
+          <p class="bill-eyebrow">Mes factures · <?= $edition ? 'Modifier' : 'Ajouter' ?></p>
+          <h1><?= $edition ? 'Modifier la facture' : 'Ajouter une facture' ?></h1>
+          <p><?= $edition
+              ? 'Corrigez les informations de votre facture, puis enregistrez.'
+              : 'Un parcours en 4 étapes : fournisseur, références, période et montant, statut.' ?></p>
         </div>
-      </div>
-    </section>
+      </header>
+
+      <form class="bill-wizard bill-glass<?= $edition ? ' bill-wizard--full' : '' ?>" method="post" action="<?= $action ?>"
+            data-validate data-bill-crud-form<?= $edition ? '' : ' data-bill-wizard' ?>>
+        <?= csrfField() ?>
+<?php if ($errors !== []): ?>
+        <div class="form-alert form-alert--error" role="alert"><?= e($errors['form'] ?? 'Veuillez corriger les champs indiqués.') ?></div>
+<?php endif; ?>
+<?php
+$p = 'b';
+$etapes = !$edition;
+$submitLabel = $edition ? 'Enregistrer les modifications' : 'Ajouter la facture';
+$cancelHtml = '<a class="bill-btn bill-btn--glass" href="' . $retour . '">Annuler</a>';
+require __DIR__ . '/partials/form-fields.php';
+?>
+      </form>
+    </div>
   </main>
 <?php
 $content     = ob_get_clean();

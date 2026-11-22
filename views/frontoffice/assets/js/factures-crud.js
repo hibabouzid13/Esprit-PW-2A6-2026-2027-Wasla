@@ -151,13 +151,24 @@
     return errors;
   }
 
+  /**
+   * Fournisseur choisi : bouton radio coché (Front Office) ou liste / champ caché (Back Office).
+   * Par le NOM : dans le formulaire STEG/SONEDE du Back Office, un champ caché porte name="type_ressource".
+   */
+  function typeOf(form) {
+    const checked = form.querySelector('input[type="radio"][name="type_ressource"]:checked');
+    if (checked) return checked.value;
+    const field = form.querySelector('[name="type_ressource"]:not([type="radio"])');
+    return field ? String(field.value).trim() : "";
+  }
+
   /** Erreurs propres aux factures : { champ: message }. */
   function businessErrors(form) {
     const v = (name) => {
       const el = form.querySelector(`[name="${name}"]`);
       return el ? String(el.value).trim() : "";
     };
-    const type = REFERENCES[v("type_ressource")] ? v("type_ressource") : "";
+    const type = REFERENCES[typeOf(form)] ? typeOf(form) : "";
     const errors = referencesErrors(sansEspaces(v("reference_abonnement")), sansEspaces(v("reference_paiement")), type);
     if (v("quantite")) {
       const m = quantiteError(v("quantite"), type);
@@ -174,8 +185,10 @@
   function setupType(form) {
     // Par le NOM : dans le formulaire STEG/SONEDE, un champ caché porte name="type_ressource"
     // et un champ en lecture seule porte id="type_ressource" (form.elements renverrait les deux).
-    const field = form.querySelector('[name="type_ressource"]');
-    if (!field) return;
+    const fields = Array.from(form.querySelectorAll('[name="type_ressource"]'));
+    if (!fields.length) return;
+    const chosenName = form.querySelector("[data-chosen-name]");
+    const chosenLogo = form.querySelector("[data-chosen-logo]");
     const unit = form.querySelector("[data-bill-unit]");
     const abo = form.querySelector('[name="reference_abonnement"]');
     const paie = form.querySelector('[name="reference_paiement"]');
@@ -183,8 +196,14 @@
     const paieHint = form.querySelector("[data-bill-paie-hint]");
     const qte = form.querySelector('[name="quantite"]');
     const update = () => {
-      const type = REFERENCES[field.value] ? field.value : "";
+      const type = REFERENCES[typeOf(form)] ? typeOf(form) : "";
       const ex = type ? EXEMPLES[type] : null;
+      // Parcours guidé : nom et logo du fournisseur choisi en tête de l'étape « Vos références »
+      if (chosenName) chosenName.textContent = type ? DUREES[type].nom : "";
+      if (chosenLogo) {
+        const logo = type && form.querySelector(`input[name="type_ressource"][value="${type}"] + .bill-option__box .bill-logo`);
+        if (logo) chosenLogo.replaceChildren(logo.cloneNode(true));
+      }
       if (unit) unit.textContent = type === "eau" ? "m³" : "kWh";
       if (abo) abo.placeholder = ex ? ex.abonnement : SANS_FOURNISSEUR;
       if (paie) paie.placeholder = ex ? ex.paiement : SANS_FOURNISSEUR;
@@ -192,7 +211,7 @@
       if (paieHint) paieHint.textContent = ex ? ex.aidePaiement : "Facultatif : talon en bas de la facture.";
       if (qte) qte.placeholder = `ex. ${type === "eau" ? EXEMPLES.eau.qte : EXEMPLES.electricite.qte}`;
     };
-    field.addEventListener("change", update);
+    fields.forEach((field) => field.addEventListener("change", update));
     update();
   }
 
@@ -235,16 +254,18 @@
     // Contrôle en direct quand on quitte un champ (et sur les champs liés : dates, ressource).
     // « blur » aussi : validation.js revérifie le champ à ce moment-là et effacerait sinon l'erreur.
     champs.concat(["type_ressource"]).forEach((name) => {
-      const el = field(name);
-      if (!el) return;
-      const run = () => {
-        const remplis = (liste) => liste.filter((c) => field(c) && field(c).value);
-        if (name === "type_ressource") apply(remplis(champs));
-        else if (name.startsWith("periode") || name === "date_echeance") apply(remplis(["periode_debut", "periode_fin", "date_echeance"]));
-        else if (el.value) apply([name]);
-      };
-      el.addEventListener("change", run);
-      el.addEventListener("blur", run);
+      // Fournisseur : chaque bouton radio (Front Office) ou la liste (Back Office)
+      const els = name === "type_ressource" ? Array.from(form.querySelectorAll('[name="type_ressource"]:not([type="hidden"])')) : [field(name)];
+      els.filter(Boolean).forEach((el) => {
+        const run = () => {
+          const remplis = (liste) => liste.filter((c) => field(c) && field(c).value);
+          if (name === "type_ressource") apply(remplis(champs));
+          else if (name.startsWith("periode") || name === "date_echeance") apply(remplis(["periode_debut", "periode_fin", "date_echeance"]));
+          else if (el.value) apply([name]);
+        };
+        el.addEventListener("change", run);
+        el.addEventListener("blur", run);
+      });
     });
 
     form.addEventListener("submit", (event) => {
@@ -260,6 +281,150 @@
         submit.disabled = false;
         submit.innerHTML = label;
       }
+    });
+  }
+
+  /* ---------------------------------------------------------------------
+     Parcours guidé (ajout) : 4 étapes = les 4 fieldset .bill-step du formulaire.
+     Amélioration progressive : sans JavaScript, toutes les étapes s'affichent.
+     « Continuer » vérifie les champs de l'étape avec les MÊMES règles (validation.js
+     + businessErrors) ; à l'envoi, tout est revérifié puis PHP refait tous les contrôles.
+     --------------------------------------------------------------------- */
+  function setupWizard(form) {
+    const api = window.WASLA_validate;
+    if (!api || !form.hasAttribute("data-bill-wizard")) return;
+    const steps = Array.from(form.querySelectorAll(".bill-step[data-step]"));
+    const dots = Array.from(form.querySelectorAll(".bill-dots li"));
+    const prev = form.querySelector('[data-wizard-nav="prev"]');
+    const next = form.querySelector('[data-wizard-nav="next"]');
+    const submit = form.querySelector("[data-wizard-submit]");
+    const status = form.querySelector("[data-wizard-status]");
+    const recap = form.querySelector("[data-wizard-recap]");
+    if (!steps.length || !prev || !next || !submit) return;
+    let current = 0;
+    form.classList.add("is-steps");
+
+    const titleOf = (step) => (step.querySelector("legend") || {}).textContent.replace(/\s+/g, " ").trim();
+    const firstControl = (step) => step.querySelector('input[type="radio"]:checked, input:not([type="hidden"]):not([type="radio"]), select, input[type="radio"]');
+    const toast = (m) => (window.WASLA_toast ? window.WASLA_toast(m) : window.WASLA_adminToast && window.WASLA_adminToast(m));
+
+    function fillRecap() {
+      if (!recap) return;
+      const v = (n) => { const el = form.querySelector(`[name="${n}"]`); return el ? String(el.value).trim() : ""; };
+      const type = typeOf(form);
+      const unite = type === "eau" ? "m³" : "kWh";
+      const qte = v("quantite");
+      const montant = v("montant");
+      const lignes = [
+        ["Fournisseur", type === "eau" ? "Eau · SONEDE" : type === "electricite" ? "Électricité · STEG" : "—"],
+        ["Abonnement", sansEspaces(v("reference_abonnement")) || "—"],
+        ["Talon", sansEspaces(v("reference_paiement")) || "Non renseigné"],
+        ["Période", ISO.test(v("periode_debut")) && ISO.test(v("periode_fin")) ? `${fr(v("periode_debut"))} → ${fr(v("periode_fin"))}` : "—"],
+        ["Consommation", qte ? (/[a-z³]/i.test(qte) ? qte : `${qte} ${unite}`) : "—"],
+        ["Montant", montant ? (/tnd/i.test(montant) ? montant : `${montant} TND`) : "—"],
+        ["Date limite de paiement", ISO.test(v("date_echeance")) ? fr(v("date_echeance")) : "Non renseignée"]
+      ];
+      // textContent : les valeurs saisies ne sont jamais interprétées comme du HTML
+      recap.replaceChildren(...lignes.map(([dt, dd]) => {
+        const div = document.createElement("div");
+        const t = document.createElement("dt"); t.textContent = dt;
+        const d = document.createElement("dd"); d.textContent = dd;
+        div.append(t, d);
+        return div;
+      }));
+      recap.hidden = false;
+    }
+
+    function show(index, focus) {
+      current = Math.max(0, Math.min(steps.length - 1, index));
+      steps.forEach((step, k) => step.classList.toggle("is-current", k === current));
+      dots.forEach((dot, k) => dot.classList.toggle("is-done", k <= current));
+      prev.hidden = current === 0;
+      next.hidden = current === steps.length - 1;
+      submit.classList.toggle("is-ready", current === steps.length - 1);
+      if (current === steps.length - 1) fillRecap();
+      if (status) status.textContent = `Étape ${current + 1} sur ${steps.length} : ${titleOf(steps[current])}`;
+      if (focus) { const c = firstControl(steps[current]); if (c) c.focus(); }
+    }
+
+    /* Vérifie les champs d'une étape ; renvoie le premier champ en erreur (ou null). */
+    function checkStep(step) {
+      let first = null;
+      const seen = new Set();
+      step.querySelectorAll("[data-rules]").forEach((el) => {
+        if (el.type === "radio") { if (seen.has(el.name)) return; seen.add(el.name); }
+        const message = api.check(form, el);
+        api.show(form, el, message);
+        if (message && !first) first = el;
+      });
+      const errors = businessErrors(form);
+      const names = new Set(Array.from(step.querySelectorAll("[name]")).map((el) => el.name));
+      names.forEach((name) => {
+        const el = form.querySelector(`[name="${name}"]:not([type="hidden"])`);
+        if (!el || el.type === "radio" || api.check(form, el)) return;   // erreur de base déjà affichée
+        api.show(form, el, errors[name] || "");
+        if (errors[name] && !first) first = el;
+      });
+      return first;
+    }
+
+    function goNext() {
+      const bad = checkStep(steps[current]);
+      if (bad) { bad.focus(); toast("Veuillez corriger les champs indiqués."); return; }
+      show(current + 1, true);
+    }
+
+    next.addEventListener("click", goNext);
+    prev.addEventListener("click", () => show(current - 1, true));
+    // Clic (souris / doigt) sur une carte fournisseur : on passe à l'étape suivante.
+    // Au clavier (flèches), on reste sur l'étape pour ne pas déplacer le focus par surprise.
+    form.querySelectorAll(".bill-option").forEach((option) => option.addEventListener("click", (event) => {
+      if (event.detail > 0 && current === 0) setTimeout(goNext, 120);
+    }));
+    // Entrée dans un champ avant la dernière étape = « Continuer » (et non l'envoi du formulaire).
+    // Écouteur en phase de capture : il passe avant validation.js, qui afficherait les erreurs des étapes suivantes.
+    form.addEventListener("submit", (event) => {
+      if (current >= steps.length - 1) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      goNext();
+    }, true);
+    // Envoi refusé (validation.js ou factures-crud.js) : on affiche l'étape du premier champ en erreur.
+    form.addEventListener("submit", (event) => {
+      if (!event.defaultPrevented) return;
+      const bad = form.querySelector(".is-invalid");
+      const step = bad && bad.closest(".bill-step[data-step]");
+      if (step) { show(steps.indexOf(step)); bad.focus(); }
+    });
+
+    // Erreurs renvoyées par PHP : ouvrir l'étape du premier champ en erreur
+    const serverBad = form.querySelector(".is-invalid, .field__error.is-visible");
+    const serverStep = serverBad && serverBad.closest(".bill-step[data-step]");
+    show(serverStep ? steps.indexOf(serverStep) : 0);
+    form._billWizard = {
+      reset: () => show(0),
+      // Erreur renvoyée plus tard (réponse JSON de la fenêtre d'ajout) : afficher l'étape du champ
+      reveal: (el) => {
+        const s = el && el.closest(".bill-step[data-step]");
+        if (s) show(steps.indexOf(s));
+      }
+    };
+  }
+
+  /* Barres de progression : largeur lue dans data-progress (aucun attribut style dans les vues). */
+  function applyProgress(root) {
+    root.querySelectorAll("[data-progress]").forEach((el) => {
+      el.style.width = `${Math.max(0, Math.min(100, Number(el.dataset.progress) || 0))}%`;
+    });
+  }
+
+  /* Filtres « Mes factures » : un clic sur une pastille relance la recherche (formulaire GET).
+     Sans JavaScript, le bouton « Filtrer » reste disponible. */
+  function setupFilters() {
+    document.querySelectorAll("form[data-bill-filters]").forEach((form) => {
+      form.querySelectorAll('input[type="radio"], select').forEach((el) => el.addEventListener("change", () => {
+        if (typeof form.requestSubmit === "function") form.requestSubmit(); else form.submit();
+      }));
     });
   }
 
@@ -292,6 +457,10 @@
     wallet: SVG('<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>'),
     banknote: SVG('<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>'),
     eye: SVG('<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>'),
+    "arrow-left": SVG('<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>'),
+    "arrow-right": SVG('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>'),
+    "circle-check": SVG('<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>'),
+    list: SVG('<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>'),
     save: SVG('<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>')
   };
   function addIcons() {
@@ -310,9 +479,17 @@
       setupType(form);
       setupReferenceInputs(form);
       setupBusinessChecks(form);
+      setupWizard(form);   // après setupBusinessChecks : son écouteur « submit » voit les deux contrôles
     });
+    applyProgress(document);
+    setupFilters();
   });
 
-  // Réutilisé par la fenêtre « Ajouter une facture » de Factures & IA
-  window.WASLA_factures = { businessErrors };
+  // Réutilisé par Factures & IA (fenêtre « Ajouter une facture », barres de progression)
+  window.WASLA_factures = {
+    businessErrors,
+    applyProgress,
+    resetWizard: (form) => { if (form && form._billWizard) form._billWizard.reset(); },
+    revealField: (form, el) => { if (form && form._billWizard) form._billWizard.reveal(el); }
+  };
 })();
