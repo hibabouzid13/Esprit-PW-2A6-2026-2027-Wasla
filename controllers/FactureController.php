@@ -49,6 +49,9 @@ class FactureController extends Controller
         'statut'               => ['required' => 'Choisissez le statut.'],
     ];
 
+    /** Talon déjà enregistré : refusé par check(), ou par la base si deux envois arrivent en même temps. */
+    private const TALON_EN_DOUBLE = 'Vous avez déjà enregistré une facture avec cette référence de paiement.';
+
     /** Tri autorisé : clé reçue dans l'URL → ORDER BY (jamais la valeur de l'utilisateur dans le SQL). */
     public const TRIS = [
         'recentes'       => 'f.periode_debut DESC, f.id_facture DESC',
@@ -351,7 +354,7 @@ class FactureController extends Controller
         // ---- Base de données : talon déjà enregistré, période qui chevauche une autre facture
         if ($type !== '' && $v('reference_paiement') !== '' && !isset($errors['reference_paiement'])
             && $this->paiementExists($idUtilisateur, $type, $v('reference_paiement'), $exclureId)) {
-            $errors['reference_paiement'] = 'Vous avez déjà enregistré une facture avec cette référence de paiement.';
+            $errors['reference_paiement'] = self::TALON_EN_DOUBLE;
         }
         if ($type !== '' && !isset($errors['periode_debut']) && !isset($errors['periode_fin'])) {
             $autre = $this->chevauchement($idUtilisateur, $type, $v('periode_debut'), $v('periode_fin'), $exclureId);
@@ -597,13 +600,12 @@ class FactureController extends Controller
                                   periode_debut, periode_fin, quantite, montant, date_echeance, statut, source)
              VALUES (:u, :t, :ra, :rp, :pd, :pf, :q, :m, :e, :s, :src)'
         );
-        $stmt->execute([
+        return $this->ecrire($stmt, [
             'u' => $f->getIdUtilisateur(), 't' => $f->getTypeRessource(),
             'ra' => $f->getReferenceAbonnement(), 'rp' => $f->getReferencePaiement(),
             'pd' => $f->getPeriodeDebut(), 'pf' => $f->getPeriodeFin(), 'q' => $f->getQuantite(),
             'm' => $f->getMontant(), 'e' => $f->getDateEcheance(), 's' => $f->getStatut(), 'src' => 'manuelle',
         ]);
-        return [];
     }
 
     /**
@@ -635,7 +637,24 @@ class FactureController extends Controller
                        f.quantite = :q, f.montant = :m, f.date_echeance = :e, f.statut = :s
                 WHERE f.id_facture = :id' . $this->scopeSql($scope, $params);
         $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
+        return $this->ecrire($stmt, $params);
+    }
+
+    /**
+     * Exécute l'INSERT ou l'UPDATE. check() a déjà cherché le talon, mais un autre envoi peut l'enregistrer
+     * juste après : la clé uq_facture_paiement refuse alors l'écriture (erreur MySQL 1062).
+     * @return array<string, string> erreurs (vide = enregistré)
+     */
+    private function ecrire(PDOStatement $stmt, array $params): array
+    {
+        try {
+            $stmt->execute($params);
+        } catch (PDOException $e) {
+            if (($e->errorInfo[1] ?? null) === 1062 && str_contains($e->getMessage(), 'uq_facture_paiement')) {
+                return ['reference_paiement' => self::TALON_EN_DOUBLE];
+            }
+            throw $e;
+        }
         return [];
     }
 
