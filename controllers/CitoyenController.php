@@ -258,8 +258,14 @@ class CitoyenController extends Controller
         }
 
         $errors = $this->validate($post, $regles);
+        foreach ($regles as $champ => $regle) {
+            // Seulement des espaces (insécables comprises) : champ vide, comme en JavaScript
+            if (str_starts_with($regle, 'required') && preg_match('/^[\s\x{FEFF}]*\z/u', $post[$champ] ?? '')) {
+                $errors[$champ] = self::MESSAGES[$champ]['required'];
+            }
+        }
         foreach ($errors as $champ => $message) {
-            if (trim($post[$champ] ?? '') === '') {
+            if (preg_match('/^[\s\x{FEFF}]*\z/u', $post[$champ] ?? '')) {
                 $errors[$champ] = self::MESSAGES[$champ]['required'] ?? $message;
             } elseif ($champ === 'password_confirm') {
                 $errors[$champ] = self::MESSAGES[$champ]['match'];
