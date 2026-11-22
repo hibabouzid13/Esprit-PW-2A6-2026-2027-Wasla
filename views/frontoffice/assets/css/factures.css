@@ -142,6 +142,7 @@
 }
 .bill-btn:hover { transform: translateY(-1px); }
 .bill-btn svg { width: 18px; height: 18px; }
+.bill-btn [data-icon] { flex: none; }
 .bill-btn--glow { color: #fff; background: linear-gradient(135deg, #2f95ff, #0a62e8); box-shadow: inset 0 0 0 1px rgba(140, 200, 255, 0.5), 0 8px 30px rgba(10, 108, 255, 0.45); }
 .bill-btn--glass { color: var(--b-heading); background: var(--b-soft); border-color: var(--b-stroke-strong); }
 .bill-btn--white { color: #fff; background: #062a47; box-shadow: 0 8px 26px rgba(6, 42, 71, 0.22); }
