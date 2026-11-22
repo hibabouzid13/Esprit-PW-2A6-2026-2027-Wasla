@@ -97,7 +97,9 @@ return [
         $user = AuthController::currentUser();
         $totalUsers = $auth->countAllUsers();
         $countByRole = $auth->countByRole();
-        $allUsers = $auth->getAllUsers();
+        // Liste nominative (noms, e-mails) : super admin uniquement
+        $voitLesComptes = $user->getRole() === 'admin';
+        $allUsers = $voitLesComptes ? $auth->getAllUsers() : [];
         require __DIR__ . '/../views/backoffice/pages/dashboard.php';
     },
 ];
