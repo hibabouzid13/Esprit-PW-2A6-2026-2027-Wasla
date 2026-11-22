@@ -237,7 +237,8 @@
     const y = (v) => Tp + (1 - v / max) * (H - Tp - B);
     const avg = known.reduce((a, b) => a + b, 0) / known.length;
     const kind = type === "eau" ? "water" : "energy";
-    const svg = el("svg", { class: "chart-svg", viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `Consommation mensuelle ${type === "eau" ? "d'eau" : "d'électricité"} calculée à partir de vos factures` });
+    // role « group » (et non « img ») : les points du graphique sont focalisables et doivent rester lisibles
+    const svg = el("svg", { class: "chart-svg", viewBox: `0 0 ${W} ${H}`, role: "group", "aria-label": `Consommation mensuelle ${type === "eau" ? "d'eau" : "d'électricité"} calculée à partir de vos factures` });
     for (let i = 0; i <= 4; i += 1) {
       const v = (max / 4) * i;
       svg.appendChild(el("line", { class: "chart-grid-line", x1: L, x2: W - R, y1: y(v), y2: y(v) }));
@@ -255,9 +256,10 @@
     values.forEach((v, i) => {
       svg.appendChild(el("text", { class: "chart-axis-label", x: x(i), y: H - 10, "text-anchor": "middle" }, S.fmt.month(months[i])));
       if (v == null) return;
-      const point = el("circle", { class: `chart-point chart-point--${kind}`, cx: x(i), cy: y(v), r: i === lastIndex ? 5 : 3.6, tabindex: "0" });
       const prev = values[i - 1];
-      point.appendChild(el("title", null, `${S.fmt.monthLong(months[i])} : ${S.fmt.number(v)} ${unit(type)}${prev ? ` (${S.fmt.percent(pct(v, prev))} vs mois précédent)` : ""}`));
+      const texte = `${S.fmt.monthLong(months[i])} : ${S.fmt.number(v)} ${unit(type)}${prev ? ` (${S.fmt.percent(pct(v, prev))} vs mois précédent)` : ""}`;
+      const point = el("circle", { class: `chart-point chart-point--${kind}`, cx: x(i), cy: y(v), r: i === lastIndex ? 5 : 3.6, tabindex: "0", role: "img", "aria-label": texte });
+      point.appendChild(el("title", null, texte));
       svg.appendChild(point);
     });
     holder.innerHTML = "";

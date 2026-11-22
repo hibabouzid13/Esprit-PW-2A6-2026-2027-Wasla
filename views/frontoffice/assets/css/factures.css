@@ -177,6 +177,34 @@
 /* Champs côte à côte : alignés en haut, même si une aide ou une erreur allonge l'un d'eux */
 .bill-modal-form .form-row { align-items: start; }
 
+/* ---------- Accessibilité ---------- */
+/* Bouton calendrier des champs date : il reçoit le focus au clavier mais n'avait aucun contour visible. */
+.bill-form input[type="date"]::-webkit-calendar-picker-indicator:focus-visible,
+.bill-modal-form input[type="date"]::-webkit-calendar-picker-indicator:focus-visible {
+  outline: 2px solid var(--color-water-blue);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Liens-boutons (« Toutes mes factures », « Effacer la conversation ») : zone cliquable d'au moins 32 px. */
+[data-service="factures"] .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+}
+
+/* Thème clair : contraste insuffisant des baisses en vert (3,1:1) et du badge « En retard » (4,2:1).
+   Teintes plus foncées des mêmes couleurs, au moins 4,5:1 (les fenêtres sont déplacées hors de <main>). */
+:root:not([data-theme="dark"]) [data-service="factures"] .svc-delta-down,
+:root:not([data-theme="dark"]) [data-service="factures"] .stat-card__delta--up,
+:root:not([data-theme="dark"]) #bill-detail .svc-delta-down {
+  color: #00785a;
+}
+:root:not([data-theme="dark"]) [data-service="factures"] .status-badge--outage,
+:root:not([data-theme="dark"]) #bill-detail .status-badge--outage {
+  color: #b42318;
+}
+
 /* Lien du bandeau d'information */
 [data-service="factures"] .svc-notice a { font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
 

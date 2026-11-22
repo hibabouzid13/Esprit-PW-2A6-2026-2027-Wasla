@@ -263,6 +263,26 @@
     });
   }
 
+  /* Accessibilité : chaque message d'erreur est relié à son champ (aria-describedby) et annoncé (aria-live),
+     les champs obligatoires sont signalés (aria-required) et les erreurs renvoyées par PHP sont marquées
+     (aria-invalid ; validation.js met ensuite cet attribut à jour à chaque contrôle). */
+  function setupA11y(form, index) {
+    const prefix = form.id || `bill-form-${index}`;
+    form.querySelectorAll("input[name]:not([type='hidden']), select[name], textarea[name]").forEach((el) => {
+      const wrap = el.closest(".admin-field");
+      const out = form.querySelector(`[data-error-for="${el.name}"]`) || (wrap && wrap.querySelector(".admin-field__error"));
+      if (out) {
+        if (!out.id) out.id = `${prefix}-err-${el.name}`;
+        out.setAttribute("aria-live", "polite");
+        const ids = (el.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean);
+        if (!ids.includes(out.id)) el.setAttribute("aria-describedby", ids.concat(out.id).join(" "));
+      }
+      if (el.type !== "radio" && /(^|\|)required(\||$)/.test(el.dataset.rules || "")) el.setAttribute("aria-required", "true");
+      const erreurServeur = el.classList.contains("is-invalid") || (wrap && wrap.classList.contains("has-error") && out && out.textContent.trim() !== "");
+      if (erreurServeur) el.setAttribute("aria-invalid", "true");
+    });
+  }
+
   /* Icônes Lucide (licence ISC) utilisées par les pages du CRUD, si elles manquent */
   const SVG = (paths) =>
     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
@@ -285,7 +305,8 @@
 
   // « load » arrive après DOMContentLoaded : ces contrôles s'exécutent APRÈS ceux de validation.js
   window.addEventListener("load", () => {
-    document.querySelectorAll("form[data-bill-crud-form]").forEach((form) => {
+    document.querySelectorAll("form[data-bill-crud-form]").forEach((form, index) => {
+      setupA11y(form, index);
       setupType(form);
       setupReferenceInputs(form);
       setupBusinessChecks(form);
