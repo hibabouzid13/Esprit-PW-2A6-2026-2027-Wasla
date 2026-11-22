@@ -98,12 +98,15 @@ return [
         AuthController::requireRole(['citoyen']);
         $scope = FactureController::scopeFor(AuthController::currentUser());
         $id = (int) ($_GET['id'] ?? 0);
-        $facture = $id > 0 ? (new FactureController())->find($id, $scope) : null;
+        $ctrl = new FactureController();
+        $facture = $id > 0 ? $ctrl->find($id, $scope) : null;
         if ($facture === null) {
             AuthController::flash('error', 'Facture introuvable.');
             header('Location: ' . url('mes-factures'));
             exit;
         }
+        // Facture précédente du même fournisseur (comparaison) : même périmètre $scope
+        $precedente = $ctrl->precedente($facture, $scope);
         require __DIR__ . '/../views/frontoffice/pages/factures/facture-voir.php';
     },
 
