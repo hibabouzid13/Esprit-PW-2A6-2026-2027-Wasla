@@ -20,6 +20,9 @@ $pageCss     = $pageCss ?? ['pages'];
 $pageScripts = $pageScripts ?? ['js/data.js', 'js/icons.js', 'js/layout.js', 'js/pages.js'];
 $extraHead   = $extraHead ?? '';
 
+// Avant tout affichage : la déconnexion d'une session expirée ou révoquée écrit un cookie
+AuthController::currentUser();
+
 require __DIR__ . '/partials/head.php';
 require __DIR__ . '/partials/spinner.php';
 require __DIR__ . '/partials/navbar.php';

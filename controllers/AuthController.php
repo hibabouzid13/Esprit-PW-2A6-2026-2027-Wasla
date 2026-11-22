@@ -55,6 +55,10 @@ class AuthController extends Controller
                 if ($user === null || $user->getStatutCompte() !== 'actif') {
                     (new self())->logout();   // compte supprimé ou suspendu entre-temps
                     session_start();
+                } elseif (self::motDePasseChange($user)) {
+                    (new self())->logout();   // mot de passe changé depuis une autre session
+                    session_start();
+                    self::flash('info', 'Votre mot de passe a été modifié : veuillez vous reconnecter.');
                 } else {
                     $_SESSION['role'] = $user->getRole(); // rôle toujours à jour
                     self::$current = $user;
@@ -62,6 +66,18 @@ class AuthController extends Controller
             }
         }
         return self::$current;
+    }
+
+    /**
+     * Le mot de passe a-t-il changé depuis l'ouverture de cette session ?
+     * La session garde une empreinte du hachage. Un module qui change le mot de passe de l'utilisateur
+     * connecté écrit la nouvelle : $_SESSION['mdp_empreinte'] = hash('sha256', $nouveauHachage);
+     */
+    private static function motDePasseChange(UserModel $user): bool
+    {
+        $empreinte = hash('sha256', $user->getMotDePasse());
+        $_SESSION['mdp_empreinte'] ??= $empreinte;
+        return !hash_equals($_SESSION['mdp_empreinte'], $empreinte);
     }
 
     public static function isBackOffice(?UserModel $user = null): bool
@@ -357,6 +373,7 @@ class AuthController extends Controller
         $_SESSION['prenom'] = $user->getPrenom();
         $_SESSION['role'] = $user->getRole();
         $_SESSION['login_time'] = time();        // début de la session authentifiée
+        $_SESSION['mdp_empreinte'] = hash('sha256', $user->getMotDePasse());
         $_SESSION['last_activity'] = time();
 
         $stmt = $this->db->prepare('UPDATE utilisateur SET derniere_connexion = NOW() WHERE id_utilisateur = :id');
