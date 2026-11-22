@@ -149,7 +149,8 @@
     const admin = body.hasAttribute("data-user-admin")
       ? `<a class="btn btn--primary" href="index.php?action=dashboard" data-close-menu>${icon("settings")} Administration</a>`
       : "";
-    return `${admin}<a class="btn btn--secondary" href="index.php?action=mon-compte" data-close-menu>${icon("user")} <span data-no-i18n>${safe}</span></a>`;
+    return `${admin}<a class="btn btn--secondary" href="index.php?action=mon-compte" data-close-menu>${icon("user")} <span data-no-i18n>${safe}</span></a>
+      <button class="btn btn--outline" type="submit" form="header-logout">${icon("log-out")} Se déconnecter</button>`;
   }
 
   function logoMark() {

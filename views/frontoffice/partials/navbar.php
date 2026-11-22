@@ -79,6 +79,12 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <span class="header-user" data-no-i18n><?= e($authUser->getPrenom()) ?></span>
         </a>
+        <form class="header-logout" id="header-logout" method="post" action="<?= url('deconnexion') ?>">
+          <?= csrfField() ?>
+          <button class="icon-btn" type="submit" aria-label="Se déconnecter" title="Se déconnecter">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg>
+          </button>
+        </form>
 <?php else: ?>
         <a class="btn btn--secondary btn--sm header-login" href="<?= url('connexion') ?>">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
