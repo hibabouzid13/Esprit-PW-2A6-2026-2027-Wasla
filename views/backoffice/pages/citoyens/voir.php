@@ -23,6 +23,9 @@ $actif = $citoyen->getStatutCompte() === 'actif';
               </div>
             </div>
           </div>
+          <div class="admin-page-head__actions">
+            <a class="admin-btn admin-btn--primary" href="<?= url('admin-citoyen-form', ['id' => $id]) ?>"><span data-icon="pencil"></span> Modifier</a>
+          </div>
         </div>
 
         <div class="admin-form-layout">
@@ -42,6 +45,25 @@ $actif = $citoyen->getStatutCompte() === 'actif';
                 <div><dt>Inscription</dt><dd><?= e(dateFr($citoyen->getDateInscription())) ?></dd></div>
                 <div><dt>Dernière connexion</dt><dd><?= e(dateFr($citoyen->getDerniereConnexion(), true)) ?></dd></div>
               </dl>
+
+              <div class="citizen-manage">
+                <p class="citizen-note"><?= $actif ? 'Un compte suspendu ne peut plus se connecter. Ses données sont conservées.' : 'Ce compte ne peut pas se connecter tant qu\'il est suspendu.' ?><?= $donnees === [] ? '' : ' Ce compte a des données : il ne peut pas être supprimé.' ?></p>
+                <div class="citizen-manage__buttons">
+                  <form method="post" action="<?= url('admin-citoyen-statut') ?>" data-confirm="<?= e(($actif ? 'Suspendre' : 'Réactiver') . ' le compte de ' . $nom . ' ?') ?>">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="id_utilisateur" value="<?= $id ?>">
+                    <input type="hidden" name="statut" value="<?= $actif ? 'suspendu' : 'actif' ?>">
+                    <button class="admin-btn admin-btn--outline" type="submit"><span data-icon="<?= $actif ? 'lock' : 'circle-check' ?>"></span> <?= $actif ? 'Suspendre' : 'Réactiver' ?></button>
+                  </form>
+<?php if ($donnees === []): ?>
+                  <form method="post" action="<?= url('admin-citoyen-supprimer') ?>" data-confirm="<?= e('Supprimer définitivement le compte de ' . $nom . ' ?') ?>">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="id_utilisateur" value="<?= $id ?>">
+                    <button class="admin-btn citizen-danger" type="submit"><span data-icon="trash"></span> Supprimer</button>
+                  </form>
+<?php endif; ?>
+                </div>
+              </div>
             </div>
           </section>
 

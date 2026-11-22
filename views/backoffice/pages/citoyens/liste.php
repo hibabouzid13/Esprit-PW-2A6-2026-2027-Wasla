@@ -22,6 +22,9 @@ $filtreActif = $filters['q'] !== '' || $filters['statut'] !== '' || $filters['zo
               </div>
             </div>
           </div>
+          <div class="admin-page-head__actions">
+            <a class="admin-btn admin-btn--primary" href="<?= url('admin-citoyen-form') ?>"><span data-icon="plus"></span> Ajouter un citoyen</a>
+          </div>
         </div>
 
         <section class="admin-kpis bill-admin-kpis" aria-label="Synthèse des comptes citoyens">
@@ -106,6 +109,7 @@ $filtreActif = $filters['q'] !== '' || $filters['statut'] !== '' || $filters['zo
                   <td class="bill-nowrap" data-label="Statut"><span class="admin-badge <?= $c->getStatutCompte() === 'actif' ? 'admin-badge--ok' : 'admin-badge--danger' ?>"><?= e(CitoyenController::statutLabel($c->getStatutCompte())) ?></span></td>
                   <td class="bill-admin-actions"><div class="admin-actions">
                     <a class="admin-action" href="<?= url('admin-citoyen-voir', ['id' => $id]) ?>" aria-label="Voir le compte de <?= e($nom) ?>"><span data-icon="eye"></span></a>
+                    <a class="admin-action" href="<?= url('admin-citoyen-form', ['id' => $id]) ?>" aria-label="Modifier le compte de <?= e($nom) ?>"><span data-icon="pencil"></span></a>
                   </div></td>
                 </tr>
 <?php endforeach; ?>

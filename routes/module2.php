@@ -253,4 +253,68 @@ return [
         $donnees = $ctrl->donneesLiees($id);
         require __DIR__ . '/../views/backoffice/pages/citoyens/voir.php';
     },
+
+    // Ajout (sans ?id) ou modification (?id=…)
+    'admin-citoyen-form' => function (): void {
+        AuthController::requireRole(['admin']);
+        $ctrl = new CitoyenController();
+        $id = FactureController::idRecu($_GET['id'] ?? '');
+        $citoyen = null;
+        if (isset($_GET['id'])) {   // ?id illisible : introuvable, surtout pas un ajout
+            $citoyen = $id > 0 ? $ctrl->find($id) : null;
+            if ($citoyen === null) {
+                AuthController::flash('error', 'Citoyen introuvable.');
+                header('Location: ' . url('admin-citoyens'));
+                exit;
+            }
+        }
+        $errors = [];
+        $old = $citoyen !== null ? CitoyenController::toForm($citoyen) : CitoyenController::emptyForm();
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $errors = $citoyen !== null ? $ctrl->update($id, $_POST) : $ctrl->create($_POST);
+            if ($errors === []) {
+                AuthController::flash('success', $citoyen !== null ? 'Compte modifié.' : 'Compte citoyen créé.');
+                header('Location: ' . ($citoyen !== null ? url('admin-citoyen-voir', ['id' => $id]) : url('admin-citoyens')));
+                exit;
+            }
+            $old = CitoyenController::postedForm($_POST);
+        }
+        $gouvernorats = (new ZoneController())->getGouvernorats();
+        require __DIR__ . '/../views/backoffice/pages/citoyens/form.php';
+    },
+
+    // Suspension / réactivation : POST uniquement
+    'admin-citoyen-statut' => function (): void {
+        AuthController::requireRole(['admin']);
+        $retour = url('admin-citoyens');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = FactureController::idRecu($_POST['id_utilisateur'] ?? '');
+            $statut = is_string($_POST['statut'] ?? null) ? $_POST['statut'] : '';
+            if ((new CitoyenController())->changerStatut($id, $statut)) {
+                AuthController::flash('success', $statut === 'actif' ? 'Compte réactivé.' : 'Compte suspendu.');
+                $retour = url('admin-citoyen-voir', ['id' => $id]);
+            } else {
+                AuthController::flash('error', 'Action impossible sur ce compte.');
+            }
+        }
+        header('Location: ' . $retour);
+        exit;
+    },
+
+    // Suppression : POST uniquement, et seulement un compte sans donnée
+    'admin-citoyen-supprimer' => function (): void {
+        AuthController::requireRole(['admin']);
+        $retour = url('admin-citoyens');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = FactureController::idRecu($_POST['id_utilisateur'] ?? '');
+            $ctrl = new CitoyenController();
+            $erreur = $ctrl->delete($id);
+            AuthController::flash($erreur === null ? 'success' : 'error', $erreur ?? 'Compte supprimé.');
+            if ($erreur !== null && $ctrl->find($id) !== null) {
+                $retour = url('admin-citoyen-voir', ['id' => $id]);
+            }
+        }
+        header('Location: ' . $retour);
+        exit;
+    },
 ];
