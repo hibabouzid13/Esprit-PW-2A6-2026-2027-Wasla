@@ -480,6 +480,8 @@
 .bill-scope .bill-wizard { padding: 4px 4px 0; max-width: none; background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; overflow: visible; }
 .bill-scope .bill-wizard::before { display: none; }
 .bill-wizard .form-alert { margin-bottom: 16px; }
+/* Champ masqué par le JavaScript (mot de passe demandé seulement si l'e-mail change) */
+.bill-ui .field[hidden] { display: none; }
 /* Deux formulaires l'un sous l'autre (Mon profil) */
 .bill-wizard + .bill-wizard { margin-top: 18px; }
 .bill-dots { display: none; justify-content: center; gap: 8px; margin: 0 0 26px; padding: 0; list-style: none; }
