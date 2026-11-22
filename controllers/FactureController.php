@@ -186,8 +186,30 @@ class FactureController extends Controller
     }
 
     /**
+     * Facture précédente du même titulaire et du même fournisseur (comparaison de la page « Voir »).
+     * Même périmètre que find() : on ne lit jamais une facture hors du $scope.
+     */
+    public function precedente(FactureModel $facture, array $scope): ?FactureModel
+    {
+        $params = [
+            'id'   => $facture->getIdFacture(),
+            'user' => $facture->getIdUtilisateur(),
+            'type' => $facture->getTypeRessource(),
+            'fin'  => $facture->getPeriodeFin(),
+        ];
+        $sql = "SELECT f.* FROM facture f
+                WHERE f.id_facture <> :id AND f.id_utilisateur = :user AND f.type_ressource = :type
+                  AND f.periode_fin < :fin" . $this->scopeSql($scope, $params) . '
+                ORDER BY f.periode_fin DESC LIMIT 1';
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $row = $stmt->fetch();
+        return $row ? FactureModel::fromArray($row) : null;
+    }
+
+    /**
      * Chiffres de synthèse du périmètre.
-     * @return array{total: int, aPayer: int, montantAPayer: float, electricite: int, eau: int, montantTotal: float}
+     * @return array{total: int, aPayer: int, montantAPayer: float, electricite: int, eau: int, montantTotal: float, montantElectricite: float, montantEau: float}
      */
     public function summary(array $scope): array
     {
@@ -197,7 +219,9 @@ class FactureController extends Controller
                        COALESCE(SUM(CASE WHEN f.statut = 'a_payer' THEN f.montant ELSE 0 END), 0) AS montant_a_payer,
                        COALESCE(SUM(f.type_ressource = 'electricite'), 0) AS electricite,
                        COALESCE(SUM(f.type_ressource = 'eau'), 0) AS eau,
-                       COALESCE(SUM(f.montant), 0) AS montant_total
+                       COALESCE(SUM(f.montant), 0) AS montant_total,
+                       COALESCE(SUM(CASE WHEN f.type_ressource = 'electricite' THEN f.montant ELSE 0 END), 0) AS montant_electricite,
+                       COALESCE(SUM(CASE WHEN f.type_ressource = 'eau' THEN f.montant ELSE 0 END), 0) AS montant_eau
                 FROM facture f WHERE 1 = 1" . $this->scopeSql($scope, $params);
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
@@ -209,6 +233,8 @@ class FactureController extends Controller
             'electricite'   => (int) ($r['electricite'] ?? 0),
             'eau'           => (int) ($r['eau'] ?? 0),
             'montantTotal'  => (float) ($r['montant_total'] ?? 0),
+            'montantElectricite' => (float) ($r['montant_electricite'] ?? 0),
+            'montantEau'    => (float) ($r['montant_eau'] ?? 0),
         ];
     }
 
