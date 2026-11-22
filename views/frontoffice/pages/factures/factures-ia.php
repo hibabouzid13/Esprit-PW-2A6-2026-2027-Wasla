@@ -66,8 +66,6 @@ $prenom = $user->getPrenom();
         </div>
       </header>
 
-      <p class="bill-notice bill-glass"><span data-icon="info"></span><span>Les factures affichées sont <strong>celles enregistrées dans votre compte</strong>. L'analyse et Wasel sont <strong>simulés</strong> (règles automatiques, aucun modèle d'IA connecté) et la décomposition des montants utilise des tarifs de référence indicatifs. Recherche, filtres et modification : <a href="<?= url('mes-factures') ?>">Mes factures</a>.</span></p>
-
       <div class="bill-tabs bill-glass" data-svc-tabs="bills" aria-label="Sections du service" data-bills-tabs>
         <button class="tab is-active" type="button" data-tab="overview">Vue générale</button>
         <button class="tab" type="button" data-tab="bills">Mes factures <span class="bill-count" data-bill-count>0</span></button>
