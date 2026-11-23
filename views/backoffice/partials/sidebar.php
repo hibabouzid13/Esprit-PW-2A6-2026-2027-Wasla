@@ -49,7 +49,6 @@ $groups = [
         'links' => [
             ['admin-demandes', "Demandes d'assistance"],
             ['admin-fournisseurs', 'Comptes fournisseurs'],
-            ['admin-acteurs', 'Bénévoles & propriétaires solaires'],
         ],
     ],
 ];

@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS utilisateur (
     email              VARCHAR(150) NOT NULL,
     telephone          VARCHAR(20)  NULL,
     mot_de_passe       VARCHAR(255) NOT NULL,
-    role               ENUM('citoyen','admin','steg','sonede','entreprise','fournisseur','benevole','proprietaire')
+    role               ENUM('citoyen','admin','steg','sonede','entreprise','fournisseur')
                                     NOT NULL DEFAULT 'citoyen',
     statut_compte      ENUM('actif','suspendu') NOT NULL DEFAULT 'actif',
     id_zone            INT          NULL,
@@ -359,7 +359,7 @@ CREATE TABLE IF NOT EXISTS reservation_refuge (
 -- Panneaux solaires d'un particulier, qui peut proposer de la recharge pendant une coupure.
 CREATE TABLE IF NOT EXISTS installation_solaire (
     id_installation       INT          NOT NULL AUTO_INCREMENT,
-    id_utilisateur        INT          NOT NULL,         -- compte « proprietaire »
+    id_utilisateur        INT          NOT NULL,         -- compte citoyen propriétaire des panneaux
     id_zone               INT          NOT NULL,
     adresse               VARCHAR(255) NOT NULL,
     puissance_kwc         DECIMAL(5,2) NOT NULL,
@@ -477,7 +477,8 @@ INSERT IGNORE INTO zone (id_zone, nom_zone, type_zone) VALUES
 --   steg@wasla.tn    / Steg@2026     sous-admin STEG
 --   sonede@wasla.tn  / Sonede@2026   sous-admin SONEDE
 --   citoyen@wasla.tn / Citoyen@2026  citoyen
---   entreprise@wasla.tn, fournisseur@wasla.tn, benevole@wasla.tn, solaire@wasla.tn / Demo@2026
+--   entreprise@wasla.tn, fournisseur@wasla.tn / Demo@2026
+--   benevole@wasla.tn, solaire@wasla.tn / Demo@2026   citoyens (un bénévole ou un propriétaire solaire est un citoyen)
 -- À CHANGER avant toute mise en ligne.
 INSERT IGNORE INTO utilisateur (nom, prenom, email, telephone, mot_de_passe, role, id_zone) VALUES
  ('Admin',     'Super',  'admin@wasla.tn',       NULL,       '$2y$10$H7ywCF6I7Eu/AVI4R3z.T.emq0MYBb/PDbfq1UR2xD1DZBmeUkdj.', 'admin',         NULL),
@@ -486,8 +487,8 @@ INSERT IGNORE INTO utilisateur (nom, prenom, email, telephone, mot_de_passe, rol
  ('Ben Salah', 'Ahmed',  'citoyen@wasla.tn',     '22123456', '$2y$10$Hhg413MYiGCVp2nV5GTRe.xEFvkuYoJgOpi/s/z6aa4kIOyaLQU1i', 'citoyen',       1),
  ('Gharbi',    'Sami',   'entreprise@wasla.tn',  '71234567', '$2y$10$QBXoZvZ08Uls7ZIW0QhFSe9tIY744Ec7nNRzvBPsOmCI68Z8G3GWu', 'entreprise',    23),
  ('Trabelsi',  'Leila',  'fournisseur@wasla.tn', '98123456', '$2y$10$QBXoZvZ08Uls7ZIW0QhFSe9tIY744Ec7nNRzvBPsOmCI68Z8G3GWu', 'fournisseur',   1),
- ('Jebali',    'Mariem', 'benevole@wasla.tn',    '55123456', '$2y$10$QBXoZvZ08Uls7ZIW0QhFSe9tIY744Ec7nNRzvBPsOmCI68Z8G3GWu', 'benevole',      1),
- ('Mansour',   'Walid',  'solaire@wasla.tn',     '29123456', '$2y$10$QBXoZvZ08Uls7ZIW0QhFSe9tIY744Ec7nNRzvBPsOmCI68Z8G3GWu', 'proprietaire',  1);
+ ('Jebali',    'Mariem', 'benevole@wasla.tn',    '55123456', '$2y$10$QBXoZvZ08Uls7ZIW0QhFSe9tIY744Ec7nNRzvBPsOmCI68Z8G3GWu', 'citoyen',       1),
+ ('Mansour',   'Walid',  'solaire@wasla.tn',     '29123456', '$2y$10$QBXoZvZ08Uls7ZIW0QhFSe9tIY744Ec7nNRzvBPsOmCI68Z8G3GWu', 'citoyen',       1);
 
 -- Informations professionnelles des rôles entreprise et fournisseur (colonnes de utilisateur)
 UPDATE utilisateur

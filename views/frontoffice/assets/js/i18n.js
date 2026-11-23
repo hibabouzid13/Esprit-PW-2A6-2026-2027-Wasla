@@ -102,7 +102,6 @@
     "Notre mission": ["Our mission", "مهمتنا"],
     "Engagements": ["Commitments", "الالتزامات"],
     "Contact": ["Contact", "اتصل بنا"],
-    "Prototype de démonstration — données illustratives": ["Demo prototype — illustrative data", "نموذج تجريبي — بيانات توضيحية"],
     "Mentions légales": ["Legal notice", "الإشعار القانوني"],
     "Confidentialité": ["Privacy", "الخصوصية"],
     "Accessibilité": ["Accessibility", "إمكانية الوصول"],

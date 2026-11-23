@@ -12,8 +12,9 @@ declare(strict_types=1);
 
 class UserModel
 {
-    /** Rôles possibles (valeurs de la colonne role). Entreprise et fournisseur sont des rôles, pas des tables. */
-    public const ROLES = ['citoyen', 'admin', 'steg', 'sonede', 'entreprise', 'fournisseur', 'benevole', 'proprietaire'];
+    /** Rôles possibles (valeurs de la colonne role). Entreprise et fournisseur sont des rôles, pas des tables.
+     *  Un bénévole ou un propriétaire de panneaux solaires est un citoyen : pas de rôle à part. */
+    public const ROLES = ['citoyen', 'admin', 'steg', 'sonede', 'entreprise', 'fournisseur'];
 
     /** Spécialités possibles d'un fournisseur (colonne specialite). */
     public const SPECIALITES = ['electricien', 'plombier', 'maintenance', 'solaire', 'hydraulique'];
