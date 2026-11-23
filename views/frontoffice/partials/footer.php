@@ -32,7 +32,9 @@
           <h2 class="footer-heading">Services</h2>
           <div class="footer-links">
             <a href="<?= url('services', [], 'alertes') ?>">Alertes personnalisées</a>
+<?php if (serviceVisible('factures')): ?>
             <a href="<?= url('services', [], 'factures') ?>">Factures &amp; IA</a>
+<?php endif; ?>
             <a href="<?= url('services', [], 'fournisseurs') ?>">Fournisseurs</a>
             <a href="<?= url('services', [], 'refuge') ?>">Zones refuge</a>
           </div>

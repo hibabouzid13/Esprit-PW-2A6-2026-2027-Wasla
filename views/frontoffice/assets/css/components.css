@@ -261,6 +261,10 @@
   margin-inline-start: 6px;
 }
 
+.header-logout {
+  margin: 0;
+}
+
 /* Theme toggle --------------------------------------------- */
 
 .theme-toggle svg {
@@ -1648,6 +1652,14 @@ kbd {
   }
 }
 
+/* Compte connecté sur un écran moyen : les boutons du compte n'affichent que leur icône */
+@media (max-width: 1240px) {
+  .header-login__text,
+  .header-login .header-user {
+    display: none;
+  }
+}
+
 @media (max-width: 1080px) {
   .brand__tagline {
     display: none;
@@ -1667,8 +1679,9 @@ kbd {
     display: block;
   }
 
-  .header-login {
-    display: none;
+  .header-login,
+  .header-logout {
+    display: none;   /* repris dans le menu mobile */
   }
 
   .header-divider {

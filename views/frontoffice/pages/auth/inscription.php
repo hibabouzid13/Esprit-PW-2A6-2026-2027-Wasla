@@ -92,6 +92,11 @@ $brandText  = 'Créez votre compte en une minute pour recevoir les alertes de vo
               <button class="btn btn--primary btn--block btn--lg" type="submit" data-loading="Création du compte…">Créer mon compte</button>
             </form>
 
+<?php foreach (['inscription-entreprise' => 'une entreprise', 'inscription-fournisseur' => 'un fournisseur'] as $actionPro => $libellePro): ?>
+<?php if (routeExists($actionPro)): ?>
+            <p class="login-alt">Vous êtes <?= e($libellePro) ?> ? <a href="<?= url($actionPro) ?>">Créer votre compte</a></p>
+<?php endif; ?>
+<?php endforeach; ?>
             <p class="login-alt">Déjà inscrit ? <a href="<?= url('connexion') ?>">Se connecter</a></p>
           </div>
         </section>

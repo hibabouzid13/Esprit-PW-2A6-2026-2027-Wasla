@@ -22,6 +22,9 @@ $isAdmin = AuthController::isBackOffice($user);
             <p>Retrouvez ici l'état du réseau dans votre gouvernorat, vos analyses et les services WASLA.</p>
           </div>
           <div class="page-hero__actions">
+<?php if ($profil = profilRoute($user)): ?>
+            <a class="btn btn--secondary" href="<?= url($profil) ?>"><span data-icon="user"></span> Modifier mon profil</a>
+<?php endif; ?>
 <?php if ($isAdmin): ?>
             <a class="btn btn--primary" href="<?= url('dashboard') ?>"><span data-icon="settings"></span> Administration</a>
 <?php endif; ?>
@@ -48,6 +51,7 @@ $isAdmin = AuthController::isBackOffice($user);
             <div><dt>Adresse e-mail</dt><dd data-no-i18n><?= e($user->getEmail()) ?></dd></div>
             <div><dt>Téléphone</dt><dd><?= e($user->getTelephone() ?: '—') ?></dd></div>
             <div><dt>Gouvernorat</dt><dd><?= e($user->getNomZone() ?? '—') ?></dd></div>
+            <div><dt>Adresse</dt><dd data-no-i18n><?= e($user->getAdresse() ?: '—') ?></dd></div>
             <div><dt>Membre depuis</dt><dd><?= e(dateFr($user->getDateInscription())) ?></dd></div>
             <div><dt>Dernière connexion</dt><dd><?= e(dateFr($user->getDerniereConnexion(), true)) ?></dd></div>
 <?php if ($user->getNomOrganisation() !== null): ?>
@@ -86,11 +90,13 @@ $isAdmin = AuthController::isBackOffice($user);
               <h3>Alertes personnalisées</h3>
               <p>Soyez prévenu des interruptions planifiées et des incidents dans votre zone.</p>
             </a>
+<?php if (serviceVisible('factures')): ?>
             <a class="service-card account-action" href="<?= url('factures') ?>">
               <span class="service-card__icon service-card__icon--navy" data-icon="file-text"></span>
               <h3>Factures</h3>
               <p>Analysez vos factures STEG et SONEDE et recevez des recommandations.</p>
             </a>
+<?php endif; ?>
             <a class="service-card account-action" href="<?= url('refuges') ?>">
               <span class="service-card__icon" data-icon="home"></span>
               <h3>Zones refuge</h3>
