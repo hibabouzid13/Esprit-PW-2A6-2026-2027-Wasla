@@ -27,7 +27,7 @@ This project was developed as part of the **Web Technologies Project – 2nd Yea
 
 **The solution.** WASLA brings together on a single platform outages and reports, alerts, bill and consumption analysis, Refuge Zones offered by companies, and a solidarity network (assistance, volunteers, solar installations, suppliers).
 
-The site includes a **Front Office** (citizens, companies, suppliers, volunteers) and a **Back Office** (administrator and STEG / SONEDE sub-admins).
+The site includes a **Front Office** (citizens, companies and suppliers) and a **Back Office** (administrator and STEG / SONEDE sub-admins).
 
 ## Features
 
@@ -37,7 +37,7 @@ The site includes a **Front Office** (citizens, companies, suppliers, volunteers
 | 1 — Outages, reports & alerts | Houssem Belhaj | `module1-interruptions` | Outages, reports, alerts, zones — STEG / SONEDE sub-admin accounts |
 | 2 — Bill & consumption analysis | Hiba Bouzid | `module2-factures` | Bills, consumption, analysis — citizen accounts |
 | 3 — Refuge Zones | Louay Azzabi | `module3-refuges` | Refuge Zones, bookings — company accounts |
-| 4 — Emergency assistance, solar & suppliers | Bechir Hellali | `module4-assistance` | Assistance requests, replies, suppliers — supplier, volunteer and owner accounts |
+| 4 — Emergency assistance, solar & suppliers | Bechir Hellali | `module4-assistance` | Assistance requests, replies, suppliers — supplier accounts |
 
 **Database.** A single script, `database/wasla.sql`, created by one member and shared by the whole team: 18 tables linked by 34 foreign keys.
 
@@ -49,7 +49,7 @@ The site includes a **Front Office** (citizens, companies, suppliers, volunteers
 | Module 3 | `refuge_zone`, `reservation_refuge` |
 | Module 4 | `installation_solaire`, `demande_assistance`, `reponse`, `personne_prioritaire` |
 
-**User management.** A single `utilisateur` table; the role is a column (`citoyen`, `admin`, `steg`, `sonede`, `entreprise`, `fournisseur`, `benevole`, `proprietaire`). **Company and supplier are roles, not tables**: their details (company name, tax ID, specialty…) are optional columns of `utilisateur`. Public sign-up always creates a `citoyen` account; other roles are assigned by the administrator. Each module manages the accounts of its own actors.
+**User management.** A single `utilisateur` table; the role is a column (`citoyen`, `admin`, `steg`, `sonede`, `entreprise`, `fournisseur`). **Volunteers and solar panel owners are not separate roles: they are citizens** (`citoyen` accounts), so they have no dedicated account. **Company and supplier are roles, not tables**: their details (company name, tax ID, specialty…) are optional columns of `utilisateur`. Public sign-up always creates a `citoyen` account; other roles are assigned by the administrator. Each module manages the accounts of its own actors.
 
 **Interface:** French / English / Arabic (RTL), light / dark theme, global search (`Ctrl+K`), responsive, keyboard accessibility.
 
