@@ -1,193 +1,191 @@
-# WASLA – Connecter. Anticiper. Protéger.
+# WASLA – Connect. Anticipate. Protect.
 
-Plateforme web pour **surveiller, anticiper et gérer les coupures d'eau et d'électricité en Tunisie**, développée à **Esprit School of Engineering** dans le cadre du Projet Technologies Web (2A6, 2026–2027).
+A web platform to **monitor, anticipate and manage water and electricity outages in Tunisia**, developed at **Esprit School of Engineering** as part of the Web Technologies Project (2A6, 2026–2027).
 
-![Page d'accueil de WASLA](docs/screenshots/home-1440-full.png)
+![WASLA home page](docs/screenshots/home-1440-full.png)
 
-## Table des matières
+## Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
-- [Sécurité](#sécurité)
+- [Security](#security)
 - [Contributors](#contributors)
 - [Academic Context](#academic-context)
 - [Getting Started](#getting-started)
 - [Usage](#usage)
 - [Contributions](#contributions)
 - [Acknowledgments](#acknowledgments)
-- [Licence](#licence)
+- [License](#license)
 
 ## Overview
 
 This project was developed as part of the **Web Technologies Project – 2nd Year Engineering Program** at **Esprit School of Engineering** (Academic Year 2026–2027).
 
-**Le problème.** En Tunisie, les coupures d'eau (SONEDE) et d'électricité (STEG) sont souvent mal annoncées : les citoyens ne savent ni quand elles commencent, ni quand elles finissent, ni où trouver de l'aide.
+**The problem.** In Tunisia, water (SONEDE) and electricity (STEG) outages are often poorly announced: citizens know neither when they start, nor when they end, nor where to find help.
 
-**La solution.** WASLA réunit sur une même plateforme les interruptions et signalements, les alertes, l'analyse des factures et de la consommation, des Refuge Zones proposées par des entreprises, et un réseau de solidarité (assistance, bénévoles, installations solaires, fournisseurs).
+**The solution.** WASLA brings together on a single platform outages and reports, alerts, bill and consumption analysis, Refuge Zones offered by companies, and a solidarity network (assistance, volunteers, solar installations, suppliers).
 
-Le site comprend un **Front Office** (citoyens, entreprises, fournisseurs, bénévoles) et un **Back Office** (administrateur et sous-admins STEG / SONEDE).
+The site includes a **Front Office** (citizens, companies and suppliers) and a **Back Office** (administrator and STEG / SONEDE sub-admins).
 
 ## Features
 
-| Module | Responsable | Branche | Contenu |
+| Module | Owner | Branch | Content |
 |---|---|---|---|
-| Commun | équipe | `main` | Architecture MVC, connexion PDO, inscription / connexion / déconnexion, sessions, rôles, contrôle d'accès, CSRF, layouts FO / BO |
-| 1 — Interruptions, signalements & alertes | Houssem Belhaj | `module1-interruptions` | Interruptions, signalements, alertes, zones — comptes sous-admins STEG / SONEDE |
-| 2 — Analyse des factures & consommation | Hiba Bouzid | `module2-factures` | Factures, consommation, analyse — comptes citoyens |
-| 3 — Refuge Zones | Louay Azzabi | `module3-refuges` | Refuge Zones, réservations — comptes entreprises |
-| 4 — Assistance d'urgence, solaire & fournisseurs | Bechir Hellali | `module4-assistance` | Demandes d'assistance, réponses, fournisseurs — comptes fournisseurs, bénévoles, propriétaires |
+| Common | team | `main` | MVC architecture, PDO connection, sign-up / login / logout, sessions, roles, access control, CSRF, FO / BO layouts |
+| 1 — Outages, reports & alerts | Houssem Belhaj | `module1-interruptions` | Outages, reports, alerts, zones — STEG / SONEDE sub-admin accounts |
+| 2 — Bill & consumption analysis | Hiba Bouzid | `module2-factures` | Bills, consumption, analysis — citizen accounts |
+| 3 — Refuge Zones | Louay Azzabi | `module3-refuges` | Refuge Zones, bookings — company accounts |
+| 4 — Emergency assistance, solar & suppliers | Bechir Hellali | `module4-assistance` | Assistance requests, replies, suppliers — supplier accounts |
 
-**Base de données.** Un seul script, `database/wasla.sql`, créé par un membre et partagé par toute l'équipe : 18 tables reliées par 34 clés étrangères.
+**Database.** A single script, `database/wasla.sql`, created by one member and shared by the whole team: 18 tables linked by 34 foreign keys.
 
-| Partie | Tables |
+| Part | Tables |
 |---|---|
-| Commun | `zone`, `utilisateur`, `notification` |
+| Common | `zone`, `utilisateur`, `notification` |
 | Module 1 | `interruption`, `signalement`, `confirmation`, `alerte`, `lieu_suivi`, `preference_alerte` |
 | Module 2 | `facture`, `consommation`, `analyse_facture` |
 | Module 3 | `refuge_zone`, `reservation_refuge` |
 | Module 4 | `installation_solaire`, `demande_assistance`, `reponse`, `personne_prioritaire` |
 
-**Gestion des utilisateurs.** Une seule table `utilisateur` ; le rôle est une colonne (`citoyen`, `admin`, `steg`, `sonede`, `entreprise`, `fournisseur`, `benevole`, `proprietaire`). **Entreprise et fournisseur sont des rôles, pas des tables** : leurs informations (raison sociale, matricule fiscal, spécialité…) sont des colonnes facultatives de `utilisateur`. L'inscription publique crée toujours un compte `citoyen` ; les autres rôles sont attribués par l'administrateur. Chaque module gère les comptes de ses propres acteurs.
+**User management.** A single `utilisateur` table; the role is a column (`citoyen`, `admin`, `steg`, `sonede`, `entreprise`, `fournisseur`). **Volunteers and solar panel owners are not separate roles: they are citizens** (`citoyen` accounts), so they have no dedicated account. **Company and supplier are roles, not tables**: their details (company name, tax ID, specialty…) are optional columns of `utilisateur`. Public sign-up always creates a `citoyen` account; other roles are assigned by the administrator. Each module manages the accounts of its own actors.
 
-**Interface :** français / anglais / arabe (RTL), thème clair / sombre, recherche globale (`Ctrl+K`), responsive, accessibilité clavier.
+**Interface:** French / English / Arabic (RTL), light / dark theme, global search (`Ctrl+K`), responsive, keyboard accessibility.
 
 ## Tech Stack
 
 ### Frontend
 
-- HTML5, CSS3, JavaScript (ES6, sans framework)
-- Contrôle de saisie en JavaScript (`validation.js`), **sans validation HTML5**
-- Icônes [Lucide](https://lucide.dev), polices Inter et IBM Plex Sans Arabic (hébergées localement)
+- HTML5, CSS3, JavaScript (ES6, no framework)
+- Input validation in JavaScript (`validation.js`), **without HTML5 validation**
+- [Lucide](https://lucide.dev) icons, Inter and IBM Plex Sans Arabic fonts (self-hosted)
 
 ### Backend
 
-- PHP 8 — architecture **MVC** sans framework
-- MySQL via **PDO** (requêtes préparées)
+- PHP 8 — **MVC** architecture without a framework
+- MySQL via **PDO** (prepared statements)
 
 ## Architecture
 
 ```text
-├── index.php                  Point d'entrée unique : index.php?action=<clé>
+├── index.php                  Single entry point: index.php?action=<key>
 ├── config/
-│   ├── database.php           Classe Database (Singleton) → Database::getConnexion()
-│   └── helpers.php            Fonctions d'affichage : e(), url(), asset(), csrfField()…
-├── models/                    UNIQUEMENT attributs privés + getters/setters + fromArray()
+│   ├── database.php           Database class (Singleton) → Database::getConnexion()
+│   └── helpers.php            Display helpers: e(), url(), asset(), csrfField()…
+├── models/                    ONLY private attributes + getters/setters + fromArray()
 │   ├── UserModel.php
 │   └── ZoneModel.php
-├── controllers/               TOUTE la logique : SQL préparé, validation, sessions, rôles
-│   ├── Controller.php         Classe de base : $this->db + validate()
-│   ├── AuthController.php     Inscription, connexion, déconnexion, rôles, CSRF
+├── controllers/               ALL the logic: prepared SQL, validation, sessions, roles
+│   ├── Controller.php         Base class: $this->db + validate()
+│   ├── AuthController.php     Sign-up, login, logout, roles, CSRF
 │   └── ZoneController.php
-├── routes/                    Un fichier par module : 'action' => function () { … }
-│   ├── common.php             Accueil, inscription, connexion, mon-compte, dashboard
+├── routes/                    One file per module: 'action' => function () { … }
+│   ├── common.php             Home, sign-up, login, my account, dashboard
 │   └── module1.php … module4.php
-├── views/                     UNIQUEMENT de l'affichage (htmlspecialchars via e())
+├── views/                     ONLY display (htmlspecialchars via e())
 │   ├── frontoffice/           layout.php, partials/, pages/, assets/
 │   └── backoffice/            layout.php, partials/, pages/, assets/
-├── database/wasla.sql         Base complète (18 tables, 4 modules) — créée par un seul membre, partagée
-└── docs/                      Guide de l'équipe, maquettes, captures
+├── database/wasla.sql         Full database (18 tables, 4 modules) — created by one member, shared
+└── docs/                      Team guide, mockups, screenshots
 ```
 
-**Parcours d'une requête :**
+**Request flow:**
 
 ```text
 index.php?action=connexion
-  → index.php : session sécurisée, en-têtes, vérification CSRF (POST)
-  → routes/common.php : 'connexion' => function () { … }
-  → AuthController::login($_POST)  (validation + requête préparée + password_verify)
+  → index.php: secure session, headers, CSRF check (POST)
+  → routes/common.php: 'connexion' => function () { … }
+  → AuthController::login($_POST)  (validation + prepared statement + password_verify)
   → views/frontoffice/pages/auth/connexion.php  (ob_start → $content)
   → views/frontoffice/layout.php  (head → navbar → $content → footer → scripts)
 ```
 
-## Sécurité
+## Security
 
-Détails, tests à montrer et réponses aux questions de réflexion du workshop : [docs/SECURITE.md](docs/SECURITE.md).
+Details, tests to demonstrate and answers to the workshop's review questions: [docs/SECURITE.md](docs/SECURITE.md).
 
-**Sessions.** La session est créée par `session_start()` et reçoit un **nouvel identifiant** à la connexion (`session_regenerate_id(true)`). Ses données (`user_id`, `role`, heure de connexion…) restent sur le serveur ; le navigateur ne garde que l'identifiant, dans le cookie `PHPSESSID` (HttpOnly). Front Office et Back Office partagent la même session ; le Back Office est protégé par `requireRole()`. Rien de tout cela n'est affiché : la gestion des sessions est dans le code (`index.php`, `AuthController`).
+**Sessions.** The session is created by `session_start()` and gets a **new ID** at login (`session_regenerate_id(true)`). Its data (`user_id`, `role`, login time…) stays on the server; the browser only keeps the ID, in the `PHPSESSID` cookie (HttpOnly). Front Office and Back Office share the same session; the Back Office is protected by `requireRole()`. None of this is displayed: session handling lives in the code (`index.php`, `AuthController`).
 
-| Risque | Protection | Où |
+| Risk | Protection | Where |
 |---|---|---|
-| Injection SQL | Requêtes préparées PDO, `ATTR_EMULATE_PREPARES = false` | contrôleurs, `config/database.php` |
-| Mots de passe en clair | `password_hash()` / `password_verify()` | `AuthController` |
-| XSS | `e()` = `htmlspecialchars()` sur chaque sortie, validation des entrées, CSP | vues, contrôleurs, `index.php` |
-| CSRF | Jeton par session dans chaque formulaire, vérifié pour **tout** POST avec `hash_equals()` | `index.php`, `csrfField()` |
-| Fixation de session | `session_regenerate_id(true)` après connexion | `AuthController::login()` |
-| Vol de session | Cookie `HttpOnly`, `SameSite=Lax`, `use_strict_mode` | `index.php` |
+| SQL injection | PDO prepared statements, `ATTR_EMULATE_PREPARES = false` | controllers, `config/database.php` |
+| Plain-text passwords | `password_hash()` / `password_verify()` | `AuthController` |
+| XSS | `e()` = `htmlspecialchars()` on every output, input validation, CSP | views, controllers, `index.php` |
+| CSRF | Per-session token in every form, checked for **every** POST with `hash_equals()` | `index.php`, `csrfField()` |
+| Session fixation | `session_regenerate_id(true)` after login | `AuthController::login()` |
+| Session hijacking | `HttpOnly` cookie, `SameSite=Lax`, `use_strict_mode` | `index.php` |
 | Clickjacking | `X-Frame-Options: DENY` | `index.php` |
-| Élévation de privilèges | Rôle forcé à l'inscription, `requireRole()` sur chaque action sensible, rôle relu en base à chaque requête | `AuthController`, `routes/` |
-| Force brute | Blocage de 60 s après 5 échecs de connexion | `AuthController::login()` |
-| Sessions abandonnées | Expiration après 30 min d'inactivité | `index.php` |
+| Privilege escalation | Role forced at sign-up, `requireRole()` on every sensitive action, role re-read from the database on every request | `AuthController`, `routes/` |
+| Brute force | 60 s lockout after 5 failed logins | `AuthController::login()` |
+| Abandoned sessions | Expiry after 30 min of inactivity | `index.php` |
 
 ## Contributors
 
-| Membre | Module | GitHub |
+| Member | Module | GitHub |
 |---|---|---|
-| Houssem Belhaj | Module 1 — Interruptions, signalements & alertes | [@iForgotTheSemicolonAgainlol](https://github.com/iForgotTheSemicolonAgainlol) |
-| Hiba Bouzid | Module 2 — Analyse des factures & consommation | [@hibabouzid](https://github.com/hibabouzid) |
-| Louay Azzabi | Module 3 — Refuge Zones | à compléter |
-| Bechir Hellali | Module 4 — Assistance d'urgence, solaire & fournisseurs | [@MohamedBechirHelali](https://github.com/MohamedBechirHelali) |
+| Houssem Belhaj | Module 1 — Outages, reports & alerts | [@iForgotTheSemicolonAgainlol](https://github.com/iForgotTheSemicolonAgainlol) |
+| Hiba Bouzid | Module 2 — Bill & consumption analysis | [@hibabouzid13](https://github.com/hibabouzid13) |
+| Louay Azzabi | Module 3 — Refuge Zones | [@loueyazzabi9-ux](https://github.com/loueyazzabi9-ux) |
+| Bechir Hellali | Module 4 — Emergency assistance, solar & suppliers | [@MohamedBechirHelali](https://github.com/MohamedBechirHelali) |
 
 ## Academic Context
 
 Developed at **Esprit School of Engineering – Tunisia**
-Projet Technologies Web — 2A6 | 2026–2027
+Web Technologies Project — 2A6 | 2026–2027
 
 ## Getting Started
 
-### Prérequis
+### Prerequisites
 
-- PHP 8.0+ et MySQL 5.7+ / MariaDB 10.3+, via [Laragon](https://laragon.org), [XAMPP](https://www.apachefriends.org/fr/index.html) ou [WampServer](https://www.wampserver.com)
-- Un navigateur récent
+- PHP 8.0+ and MySQL 5.7+ / MariaDB 10.3+, via [Laragon](https://laragon.org), [XAMPP](https://www.apachefriends.org/index.html) or [WampServer](https://www.wampserver.com)
+- A recent web browser
 
 ### Installation
 
-1. Cloner le dépôt dans le dossier web (`C:\laragon\www`, `htdocs` ou `www`) :
+1. Clone the repository into the web folder (`C:\laragon\www`, `htdocs` or `www`):
 
    ```bash
-   git clone https://github.com/<organisation>/<nom-du-depot>.git
+   git clone https://github.com/hibabouzid13/Esprit-PW-2A6-2026-2027-Wasla.git
    ```
 
-2. Démarrer Apache et MySQL.
-3. Dans **phpMyAdmin**, créer la base `wasla` (`utf8mb4_unicode_ci`), puis onglet **SQL** : coller tout `database/wasla.sql` et exécuter. Ce fichier unique crée les 18 tables des 4 modules et les données de démonstration.
-4. Si votre MySQL a un mot de passe, le renseigner dans `config/database.php` (`DB_PASS`).
-5. Ouvrir `http://localhost/<nom-du-depot>/index.php`.
+2. Start Apache and MySQL.
+3. In **phpMyAdmin**, create the `wasla` database (`utf8mb4_unicode_ci`), then in the **SQL** tab paste the whole `database/wasla.sql` file and run it. This single file creates the 18 tables of the 4 modules and the demo data.
+4. If your MySQL server has a password, set it in `config/database.php` (`DB_PASS`).
+5. Open `http://localhost/Esprit-PW-2A6-2026-2027-Wasla/index.php`.
 
-### Comptes de démonstration
+### Demo accounts
 
-| Rôle | E-mail | Mot de passe |
+| Role | Email | Password |
 |---|---|---|
 | Super admin | `admin@wasla.tn` | `Admin@2026` |
-| Sous-admin STEG | `steg@wasla.tn` | `Steg@2026` |
-| Sous-admin SONEDE | `sonede@wasla.tn` | `Sonede@2026` |
-| Citoyen | `citoyen@wasla.tn` | `Citoyen@2026` |
-| Entreprise | `entreprise@wasla.tn` | `Demo@2026` |
-| Fournisseur | `fournisseur@wasla.tn` | `Demo@2026` |
-| Bénévole | `benevole@wasla.tn` | `Demo@2026` |
-| Propriétaire solaire | `solaire@wasla.tn` | `Demo@2026` |
+| STEG sub-admin | `steg@wasla.tn` | `Steg@2026` |
+| SONEDE sub-admin | `sonede@wasla.tn` | `Sonede@2026` |
+| Citizen | `citoyen@wasla.tn` | `Citoyen@2026` |
+| Company | `entreprise@wasla.tn` | `Demo@2026` |
+| Supplier | `fournisseur@wasla.tn` | `Demo@2026` |
 
 ## Usage
 
-| Page | Adresse | Accès |
+| Page | URL | Access |
 |---|---|---|
-| Accueil | `index.php?action=accueil` | public |
-| Créer un compte | `index.php?action=inscription` | visiteur |
-| Connexion | `index.php?action=connexion` | visiteur |
-| Mon espace | `index.php?action=mon-compte` | connecté |
-| Tableau de bord (Back Office) | `index.php?action=dashboard` | admin, STEG, SONEDE |
+| Home | `index.php?action=accueil` | public |
+| Create an account | `index.php?action=inscription` | visitor |
+| Login | `index.php?action=connexion` | visitor |
+| My space | `index.php?action=mon-compte` | logged in |
+| Dashboard (Back Office) | `index.php?action=dashboard` | admin, STEG, SONEDE |
 
 ## Contributions
 
-Voir [docs/GUIDE-EQUIPE.md](docs/GUIDE-EQUIPE.md) : branches, fichiers propres à chaque module, conventions de commits, fusion et GitHub Project.
+See [docs/GUIDE-EQUIPE.md](docs/GUIDE-EQUIPE.md): branches, files owned by each module, commit conventions, merging and GitHub Project.
 
 ## Acknowledgments
 
-- Nos tuteurs du Projet Technologies Web à **Esprit School of Engineering**
-- [Lucide](https://lucide.dev) (icônes, licence ISC), [geoBoundaries](https://www.geoboundaries.org) (contours des gouvernorats), [Inter](https://rsms.me/inter/) et [IBM Plex Sans Arabic](https://github.com/IBM/plex) (SIL Open Font License)
+- Our Web Technologies Project tutors at **Esprit School of Engineering**
+- [Lucide](https://lucide.dev) (icons, ISC license), [geoBoundaries](https://www.geoboundaries.org) (governorate boundaries), [Inter](https://rsms.me/inter/) and [IBM Plex Sans Arabic](https://github.com/IBM/plex) (SIL Open Font License)
 
-Les chiffres de démonstration affichés sont **fictifs**.
+The demo figures shown are **fictitious**.
 
-## Licence
+## License
 
-Distribué sous la **licence MIT**. Voir [LICENSE](LICENSE).
+Distributed under the **MIT License**. See [LICENSE](LICENSE).
