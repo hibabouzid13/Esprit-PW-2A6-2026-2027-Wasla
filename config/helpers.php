@@ -85,8 +85,6 @@ function roleLabel(string $role): string
         'citoyen'       => 'Citoyen',
         'entreprise'    => 'Entreprise',
         'fournisseur'   => 'Fournisseur',
-        'benevole'      => 'Bénévole',
-        'proprietaire'  => 'Propriétaire solaire',
     ][$role] ?? ucfirst($role);
 }
 
