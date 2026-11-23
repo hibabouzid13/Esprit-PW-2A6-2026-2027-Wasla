@@ -18,8 +18,12 @@ $groups = [
             ['admin-interruptions', 'Interruptions', ['admin-interruption-form']],
             ['admin-signalements', 'Signalements'],
             ['admin-alertes', 'Alertes', ['admin-alerte-form']],
-            ['admin-zones', 'Zones géographiques', ['admin-zone-form']],
-            ['admin-sous-admins', 'Comptes sous-admins'],
+            // Super admin uniquement (revérifié dans routes/module1.php)
+            ...(AuthController::hasRole(['admin']) ? [
+                ['admin-zones', 'Zones géographiques', ['admin-zone-form']],
+                ['admin-sous-admins', 'Comptes sous-admins', ['admin-sous-admin-form', 'admin-sous-admin-voir']],
+            ] : []),
+            ['admin-profil', 'Mon profil'],
         ],
     ],
     // ── Module 2 — Hiba ──
