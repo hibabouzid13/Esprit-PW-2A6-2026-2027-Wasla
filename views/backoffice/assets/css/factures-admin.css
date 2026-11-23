@@ -1,0 +1,283 @@
+/* ==========================================================================
+   Module 2 — Factures : compléments Back Office (Hiba).
+   Chargé par views/backoffice/pages/factures/*.php, sans toucher à admin.css.
+   ========================================================================== */
+
+/* Tableau : plus compact et sans retours à la ligne gênants. */
+.bill-admin-table th,
+.bill-admin-table td {
+  padding-inline: 9px;
+}
+
+.bill-admin-table .bill-nowrap {
+  white-space: nowrap;
+}
+
+.bill-admin-table .bill-client small {
+  display: block;
+  color: var(--color-text-secondary);
+}
+
+.bill-admin-table .bill-amount {
+  color: var(--color-heading);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.bill-admin-table .bill-period span {
+  display: block;
+  white-space: nowrap;
+}
+
+.bill-admin-table .bill-period span + span {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+
+.admin-table-count {
+  margin: 0;
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+}
+
+/* Formulaire : le fieldset « Statut » sans la bordure du navigateur. */
+fieldset.admin-field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+fieldset.admin-field legend {
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+/* En-tête (liste et formulaire) : l'icône reste carrée, les textes longs passent à la ligne. */
+.bill-admin-head .admin-page-head__icon {
+  flex: none;
+}
+
+.bill-admin-head .admin-page-head__title > div {
+  min-width: 0;
+}
+
+.bill-admin-head .admin-page-head__title p {
+  overflow-wrap: anywhere;
+}
+
+/* Fournisseur imposé (STEG / SONEDE) : le champ en lecture seule ne doit pas ressembler à un champ modifiable. */
+.admin-form .admin-input[readonly] {
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  cursor: default;
+}
+
+/* Thème sombre : le choix coché (« À payer » / « Payée ») gardait un texte bleu sur fond bleu, peu lisible. */
+[data-theme="dark"] .admin-form .admin-choice input:checked + span {
+  color: var(--color-heading);
+}
+
+@media (max-width: 720px) {
+  .admin-form .admin-form__actions {
+    flex-wrap: wrap;
+  }
+
+  /* « auto » : le bouton garde la place de son icône, et passe à la ligne sur un très petit écran */
+  .admin-form .admin-form__actions .admin-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .admin-form .admin-form__actions .admin-btn [data-icon] {
+    flex: none;
+  }
+}
+
+/* Bouton calendrier des champs date : contour visible au clavier. */
+.admin-form input[type="date"]::-webkit-calendar-picker-indicator:focus-visible {
+  outline: 2px solid var(--color-water-blue);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Mention « (facultatif) » dans un libellé. */
+.admin-field__optional {
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+/* Deux références dans une cellule : abonnement, puis talon en petit. */
+.bill-admin-table .bill-refs small {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* « En retard » : rouge rapproché de la couleur des titres pour un contraste d'au moins 4,5:1 (clair et sombre). */
+.bill-admin-table .admin-badge--danger {
+  color: color-mix(in srgb, var(--color-outage) 80%, var(--color-heading));
+}
+
+/* Encadré « À savoir ». */
+.admin-aside-note dd {
+  margin: 2px 0 0;
+}
+
+.bill-admin-table th:first-child,
+.bill-admin-table td:first-child {
+  padding-inline-start: 20px;
+}
+
+/* Barre de filtres : le champ de recherche prend la place disponible. */
+.bill-admin-toolbar .admin-search {
+  flex: 1 1 260px;
+  max-width: none;
+}
+
+/* Montants des indicateurs : taille adaptée pour rester dans la carte (4 cartes par ligne à 1366 px). */
+.bill-admin-kpis .admin-kpi__value {
+  font-size: clamp(1.15rem, 1.4vw, 1.6rem);
+}
+
+/* Sous 1440 px (barre latérale comprise), les 9 colonnes ne tiennent pas : Montant, Statut et les actions
+   sortaient de l'écran. Chaque facture devient une carte : ligne 1 = n° et actions, puis 4 colonnes. */
+.bill-admin-table .bill-client {
+  min-width: 170px;
+  max-width: 230px;
+}
+
+.bill-admin-table .bill-client small {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1439px) {
+  .bill-admin-table .bill-client {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .bill-admin-table thead {
+    display: none;
+  }
+
+  .bill-admin-table tr {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px 18px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .bill-admin-table td,
+  .bill-admin-table td:first-child {
+    padding: 0;
+    border: 0;
+  }
+
+  .bill-admin-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    color: var(--color-text-secondary);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .bill-admin-table td.admin-table__id {
+    grid-row: 1;
+    grid-column: 1 / -2;
+    align-self: center;
+    font-weight: 700;
+  }
+
+  .bill-admin-table td.admin-table__id::before {
+    display: inline;
+    margin-inline-end: 4px;
+  }
+
+  .bill-admin-table td.bill-admin-actions {
+    grid-row: 1;
+    grid-column: -2 / -1;
+    justify-self: end;
+  }
+
+  /* Cartes : le talon et le fournisseur passent à la ligne au lieu de déborder sur la colonne voisine */
+  .bill-admin-table td.bill-refs,
+  .bill-admin-table .bill-refs small {
+    white-space: normal;
+  }
+
+  .bill-admin-table .bill-admin-provider {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 720px) {
+  .bill-admin-toolbar > *,
+  .bill-admin-toolbar .admin-select {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .bill-admin-toolbar .admin-btn {
+    justify-content: center;
+  }
+
+  .bill-admin-table tr {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Téléphone : les références prennent toute la largeur (talon sur une ligne) */
+  .bill-admin-table td.bill-refs {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Logos STEG / SONEDE dans la colonne Fournisseur (badge blanc + halo de la couleur du fournisseur) */
+.bill-admin-provider {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bill-admin-logo {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.bill-admin-logo svg {
+  width: 68%;
+  height: 68%;
+  display: block;
+}
+
+.bill-admin-logo--steg {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06), 0 0 0 2px rgba(115, 209, 61, 0.45);
+}
+
+.bill-admin-logo--steg svg {
+  filter: brightness(1.04) contrast(1.06);
+}
+
+.bill-admin-logo--sonede {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06), 0 0 0 2px rgba(0, 163, 215, 0.5);
+}
+
+.bill-admin-logo--sonede svg {
+  width: 78%;
+  height: 78%;
+}

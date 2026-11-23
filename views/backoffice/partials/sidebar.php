@@ -27,8 +27,10 @@ $groups = [
         'label' => 'Factures & consommation',
         'icon'  => 'file-text',
         'links' => [
+            ['admin-factures', 'Factures', ['admin-facture-form']],
             ['admin-consommations', 'Données de consommation'],
-            ['admin-citoyens', 'Comptes citoyens'],
+            // Super admin uniquement (revérifié dans routes/module2.php)
+            ...(AuthController::hasRole(['admin']) ? [['admin-citoyens', 'Comptes citoyens', ['admin-citoyen-voir', 'admin-citoyen-form']]] : []),
         ],
     ],
     // ── Module 3 — Louay ──

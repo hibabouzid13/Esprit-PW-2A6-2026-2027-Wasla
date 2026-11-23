@@ -20,4 +20,378 @@
 declare(strict_types=1);
 
 return [
+    // Page « Analyses & tendances » de la consommation
+    'analyses' => function (): void {
+        require __DIR__ . '/../views/frontoffice/pages/factures/analyses.php';
+    },
+    // Service « Factures & IA » : graphiques, analyse et assistant calculés sur les
+    // factures du citoyen connecté (base de données uniquement, aucune donnée de démonstration)
+    'factures' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        $user = AuthController::currentUser();
+        $factures = (new FactureController())->search(FactureController::scopeFor($user), FactureController::cleanFilters([]));
+        $bills = array_map(fn (FactureModel $f) => FactureController::pourJs($f), $factures);
+        $old = FactureController::emptyForm();
+        $toast = FactureController::prendreToast();
+        require __DIR__ . '/../views/frontoffice/pages/factures/factures-ia.php';
+    },
+
+    // Ajout depuis la fenêtre « Ajouter une facture » de Factures & IA (fetch, réponse JSON).
+    // Même contrôle que facture-ajouter : FactureController::create() ; jeton CSRF vérifié par index.php.
+    'facture-ajouter-json' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        header('Content-Type: application/json; charset=utf-8');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['ok' => false, 'errors' => ['form' => 'Méthode non autorisée.']], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        $user = AuthController::currentUser();
+        $errors = (new FactureController())->create($_POST, $user->getIdUtilisateur(), FactureController::scopeFor($user));
+        if ($errors === []) {
+            FactureController::annoncer(FactureController::TOAST_AJOUT);   // bulle affichée sur la page suivante
+            echo json_encode(['ok' => true, 'redirect' => url('factures', ['onglet' => 'bills'])], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        } else {
+            // 200 + ok:false : erreurs de saisie normales (affichées sous les champs par factures.js)
+            echo json_encode(['ok' => false, 'errors' => $errors], JSON_UNESCAPED_UNICODE);
+        }
+        exit;
+    },
+
+    // =================================================================
+    // CRUD FACTURE — Front Office (le citoyen gère SES factures)
+    // =================================================================
+
+    // Liste + recherche / filtres / tri
+    'mes-factures' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        $user = AuthController::currentUser();
+        $scope = FactureController::scopeFor($user);
+        $ctrl = new FactureController();
+        $filters = FactureController::cleanFilters($_GET);
+        $factures = $ctrl->search($scope, $filters);
+        $summary = $ctrl->summary($scope);
+        $toast = FactureController::prendreToast();
+        require __DIR__ . '/../views/frontoffice/pages/factures/mes-factures.php';
+    },
+
+    // Ajout
+    'facture-ajouter' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        $user = AuthController::currentUser();
+        $errors = [];
+        $old = FactureController::emptyForm();
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $errors = (new FactureController())->create($_POST, $user->getIdUtilisateur(), FactureController::scopeFor($user));
+            if ($errors === []) {
+                FactureController::annoncer(FactureController::TOAST_AJOUT);   // bulle affichée sur la page suivante
+                header('Location: ' . url('mes-factures'));
+                exit;
+            }
+            $old = FactureController::postedForm($_POST);
+        }
+        $mode = 'ajout';
+        $facture = null;
+        require __DIR__ . '/../views/frontoffice/pages/factures/facture-form.php';
+    },
+
+    // Consultation (?id=…) : seulement une facture du citoyen connecté
+    'facture-voir' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        $scope = FactureController::scopeFor(AuthController::currentUser());
+        $id = FactureController::idRecu($_GET['id'] ?? '');
+        $ctrl = new FactureController();
+        $facture = $id > 0 ? $ctrl->find($id, $scope) : null;
+        if ($facture === null) {
+            AuthController::flash('error', 'Facture introuvable.');
+            header('Location: ' . url('mes-factures'));
+            exit;
+        }
+        // Facture précédente du même fournisseur (comparaison) : même périmètre $scope
+        $precedente = $ctrl->precedente($facture, $scope);
+        require __DIR__ . '/../views/frontoffice/pages/factures/facture-voir.php';
+    },
+
+    // Modification (?id=…) : seulement une facture du citoyen connecté
+    'facture-modifier' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        $user = AuthController::currentUser();
+        $scope = FactureController::scopeFor($user);
+        $ctrl = new FactureController();
+        $id = FactureController::idRecu($_GET['id'] ?? '');
+        $facture = $id > 0 ? $ctrl->find($id, $scope) : null;
+        if ($facture === null) {
+            AuthController::flash('error', 'Facture introuvable.');
+            header('Location: ' . url('mes-factures'));
+            exit;
+        }
+        $errors = [];
+        $old = FactureController::toForm($facture);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $errors = $ctrl->update($id, $_POST, $scope);
+            if ($errors === []) {
+                AuthController::flash('success', 'Facture modifiée.');
+                header('Location: ' . url('facture-voir', ['id' => $id]));
+                exit;
+            }
+            $old = FactureController::postedForm($_POST);
+        }
+        $mode = 'modification';
+        require __DIR__ . '/../views/frontoffice/pages/factures/facture-form.php';
+    },
+
+    // Suppression : POST uniquement (jeton CSRF vérifié par index.php)
+    'facture-supprimer' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $scope = FactureController::scopeFor(AuthController::currentUser());
+            $ok = (new FactureController())->delete(FactureController::idRecu($_POST['id_facture'] ?? ''), $scope);
+            AuthController::flash($ok ? 'success' : 'error', $ok ? 'Facture supprimée.' : 'Facture introuvable.');
+        }
+        // Retour vers la page d'origine (liste blanche : jamais une adresse fournie telle quelle)
+        $retour = ($_POST['retour'] ?? '') === 'factures' ? url('factures', ['onglet' => 'bills']) : url('mes-factures');
+        header('Location: ' . $retour);
+        exit;
+    },
+
+    // =================================================================
+    // CRUD FACTURE — Back Office (admin : toutes ; STEG : électricité ; SONEDE : eau)
+    // =================================================================
+
+    'admin-factures' => function (): void {
+        AuthController::requireRole(AuthController::BACKOFFICE_ROLES);
+        $user = AuthController::currentUser();
+        $scope = FactureController::scopeFor($user);
+        $ctrl = new FactureController();
+        $filters = FactureController::cleanFilters($_GET);
+        $factures = $ctrl->search($scope, $filters);
+        $summary = $ctrl->summary($scope);
+        require __DIR__ . '/../views/backoffice/pages/factures/liste.php';
+    },
+
+    // Ajout (sans ?id) ou modification (?id=…)
+    'admin-facture-form' => function (): void {
+        AuthController::requireRole(AuthController::BACKOFFICE_ROLES);
+        $user = AuthController::currentUser();
+        $scope = FactureController::scopeFor($user);
+        $ctrl = new FactureController();
+        $id = FactureController::idRecu($_GET['id'] ?? '');
+        $facture = null;
+        if (isset($_GET['id'])) {   // ?id illisible : introuvable, surtout pas un ajout
+            $facture = $id > 0 ? $ctrl->find($id, $scope) : null;
+            if ($facture === null) {
+                AuthController::flash('error', 'Facture introuvable.');
+                header('Location: ' . url('admin-factures'));
+                exit;
+            }
+        }
+        $typeImpose = $scope['type'] ?? '';
+        $errors = [];
+        $old = $facture !== null ? FactureController::toForm($facture) : FactureController::emptyForm($typeImpose);
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if ($facture !== null) {
+                $errors = $ctrl->update($id, $_POST, $scope);
+            } else {
+                // Le titulaire doit être un compte citoyen actif
+                $idCitoyen = FactureController::idRecu($_POST['id_utilisateur'] ?? '');
+                $ids = array_map(fn ($c) => $c->getIdUtilisateur(), $ctrl->getCitoyens());
+                $errors = in_array($idCitoyen, $ids, true)
+                    ? $ctrl->create($_POST, $idCitoyen, $scope)
+                    : ['id_utilisateur' => FactureController::MESSAGES['id_utilisateur']['required']];
+            }
+            if ($errors === []) {
+                AuthController::flash('success', $facture !== null ? 'Facture modifiée.' : 'Facture ajoutée.');
+                header('Location: ' . url('admin-factures'));
+                exit;
+            }
+            $old = FactureController::postedForm($_POST) + $old;
+            if ($facture !== null) {
+                $old['id_utilisateur'] = (string) $facture->getIdUtilisateur();
+            }
+        }
+        $citoyens = $facture === null ? $ctrl->getCitoyens() : [];
+        require __DIR__ . '/../views/backoffice/pages/factures/form.php';
+    },
+
+    'admin-facture-supprimer' => function (): void {
+        AuthController::requireRole(AuthController::BACKOFFICE_ROLES);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $scope = FactureController::scopeFor(AuthController::currentUser());
+            $ok = (new FactureController())->delete(FactureController::idRecu($_POST['id_facture'] ?? ''), $scope);
+            AuthController::flash($ok ? 'success' : 'error', $ok ? 'Facture supprimée.' : 'Facture introuvable.');
+        }
+        header('Location: ' . url('admin-factures'));
+        exit;
+    },
+
+    // =================================================================
+    // GESTION DES UTILISATEURS : profil du citoyen — Front Office (SON compte uniquement)
+    // =================================================================
+
+    // L'identifiant vient toujours de la session, jamais de l'adresse ni du formulaire
+    'mon-profil' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        $user = AuthController::currentUser();
+        $errors = [];
+        $errorsMdp = [];
+        $errorsSuppression = [];
+        $old = CitoyenController::toForm($user);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $errors = (new CitoyenController())->updateProfil($user->getIdUtilisateur(), $_POST);
+            if ($errors === []) {
+                AuthController::flash('success', 'Profil modifié.');
+                header('Location: ' . url('mon-profil'));
+                exit;
+            }
+            $old = CitoyenController::postedForm($_POST);
+        }
+        $gouvernorats = (new ZoneController())->getGouvernorats();
+        $aDesDonnees = (new CitoyenController())->donneesLiees($user->getIdUtilisateur()) !== [];
+        require __DIR__ . '/../views/frontoffice/pages/citoyens/mon-profil.php';
+    },
+
+    // Changement de mot de passe : POST uniquement, mot de passe actuel obligatoire
+    'mon-mot-de-passe' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . url('mon-profil'));
+            exit;
+        }
+        $user = AuthController::currentUser();
+        $errors = [];
+        $errorsSuppression = [];
+        $errorsMdp = (new CitoyenController())->changerMotDePasse($user->getIdUtilisateur(), $_POST);
+        if ($errorsMdp === []) {
+            AuthController::flash('success', 'Mot de passe modifié.');
+            header('Location: ' . url('mon-profil'));
+            exit;
+        }
+        $old = CitoyenController::toForm($user);
+        $gouvernorats = (new ZoneController())->getGouvernorats();
+        $aDesDonnees = (new CitoyenController())->donneesLiees($user->getIdUtilisateur()) !== [];
+        require __DIR__ . '/../views/frontoffice/pages/citoyens/mon-profil.php';
+    },
+
+    // Suppression de SON compte : POST uniquement, mot de passe obligatoire
+    'supprimer-mon-compte' => function (): void {
+        AuthController::requireRole(['citoyen']);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . url('mon-profil'));
+            exit;
+        }
+        $user = AuthController::currentUser();
+        $ctrl = new CitoyenController();
+        ['errors' => $errorsSuppression, 'supprime' => $supprime] = $ctrl->supprimerSonCompte($user->getIdUtilisateur(), $_POST);
+        if ($errorsSuppression === []) {
+            (new AuthController())->logout();
+            session_start();   // nouvelle session vide, pour le message
+            AuthController::flash('success', $supprime
+                ? 'Votre compte a été supprimé.'
+                : 'Votre compte a été désactivé. Vos données sont conservées : seul un administrateur peut le réactiver.');
+            header('Location: ' . url('connexion'));
+            exit;
+        }
+        $errors = [];
+        $errorsMdp = [];
+        $old = CitoyenController::toForm($user);
+        $gouvernorats = (new ZoneController())->getGouvernorats();
+        $aDesDonnees = $ctrl->donneesLiees($user->getIdUtilisateur()) !== [];
+        require __DIR__ . '/../views/frontoffice/pages/citoyens/mon-profil.php';
+    },
+
+    // =================================================================
+    // GESTION DES UTILISATEURS : comptes citoyens — Back Office (super admin uniquement)
+    // =================================================================
+
+    // Liste + recherche / filtres / tri
+    'admin-citoyens' => function (): void {
+        AuthController::requireRole(['admin']);
+        $ctrl = new CitoyenController();
+        $filters = CitoyenController::cleanFilters($_GET);
+        $citoyens = $ctrl->search($filters);
+        $summary = $ctrl->summary();
+        $nbFactures = $ctrl->facturesParCitoyen();
+        $gouvernorats = (new ZoneController())->getGouvernorats();
+        require __DIR__ . '/../views/backoffice/pages/citoyens/liste.php';
+    },
+
+    // Fiche (?id=…) : uniquement un compte de rôle « citoyen »
+    'admin-citoyen-voir' => function (): void {
+        AuthController::requireRole(['admin']);
+        $ctrl = new CitoyenController();
+        $id = FactureController::idRecu($_GET['id'] ?? '');
+        $citoyen = $id > 0 ? $ctrl->find($id) : null;
+        if ($citoyen === null) {
+            AuthController::flash('error', 'Citoyen introuvable.');
+            header('Location: ' . url('admin-citoyens'));
+            exit;
+        }
+        $donnees = $ctrl->donneesLiees($id);
+        require __DIR__ . '/../views/backoffice/pages/citoyens/voir.php';
+    },
+
+    // Ajout (sans ?id) ou modification (?id=…)
+    'admin-citoyen-form' => function (): void {
+        AuthController::requireRole(['admin']);
+        $ctrl = new CitoyenController();
+        $id = FactureController::idRecu($_GET['id'] ?? '');
+        $citoyen = null;
+        if (isset($_GET['id'])) {   // ?id illisible : introuvable, surtout pas un ajout
+            $citoyen = $id > 0 ? $ctrl->find($id) : null;
+            if ($citoyen === null) {
+                AuthController::flash('error', 'Citoyen introuvable.');
+                header('Location: ' . url('admin-citoyens'));
+                exit;
+            }
+        }
+        $errors = [];
+        $old = $citoyen !== null ? CitoyenController::toForm($citoyen) : CitoyenController::emptyForm();
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $errors = $citoyen !== null ? $ctrl->update($id, $_POST) : $ctrl->create($_POST);
+            if ($errors === []) {
+                AuthController::flash('success', $citoyen !== null ? 'Compte modifié.' : 'Compte citoyen créé.');
+                header('Location: ' . ($citoyen !== null ? url('admin-citoyen-voir', ['id' => $id]) : url('admin-citoyens')));
+                exit;
+            }
+            $old = CitoyenController::postedForm($_POST);
+        }
+        $gouvernorats = (new ZoneController())->getGouvernorats();
+        require __DIR__ . '/../views/backoffice/pages/citoyens/form.php';
+    },
+
+    // Suspension / réactivation : POST uniquement
+    'admin-citoyen-statut' => function (): void {
+        AuthController::requireRole(['admin']);
+        $retour = url('admin-citoyens');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = FactureController::idRecu($_POST['id_utilisateur'] ?? '');
+            $statut = is_string($_POST['statut'] ?? null) ? $_POST['statut'] : '';
+            if ((new CitoyenController())->changerStatut($id, $statut)) {
+                AuthController::flash('success', $statut === 'actif' ? 'Compte réactivé.' : 'Compte suspendu.');
+                $retour = url('admin-citoyen-voir', ['id' => $id]);
+            } else {
+                AuthController::flash('error', 'Action impossible sur ce compte.');
+            }
+        }
+        header('Location: ' . $retour);
+        exit;
+    },
+
+    // Suppression : POST uniquement, et seulement un compte sans donnée
+    'admin-citoyen-supprimer' => function (): void {
+        AuthController::requireRole(['admin']);
+        $retour = url('admin-citoyens');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = FactureController::idRecu($_POST['id_utilisateur'] ?? '');
+            $ctrl = new CitoyenController();
+            $erreur = $ctrl->delete($id);
+            AuthController::flash($erreur === null ? 'success' : 'error', $erreur ?? 'Compte supprimé.');
+            if ($erreur !== null && $ctrl->find($id) !== null) {
+                $retour = url('admin-citoyen-voir', ['id' => $id]);
+            }
+        }
+        header('Location: ' . $retour);
+        exit;
+    },
 ];
