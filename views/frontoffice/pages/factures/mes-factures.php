@@ -2,7 +2,8 @@
 /**
  * Vue : Mes factures (liste + recherche / filtres / tri) — Front Office — Module 2 (Hiba).
  * Variables reçues : $factures (FactureModel[]), $summary (FactureController::summary()),
- *                    $filters (FactureController::cleanFilters()).
+ *                    $filters (FactureController::cleanFilters()),
+ *                    $toast (bulle de succès à afficher, '' sinon : FactureController::prendreToast()).
  * Filtres : formulaire GET (lecture seule, pas de jeton CSRF). Les pastilles sont des boutons radio :
  * sans JavaScript, « Filtrer » envoie le formulaire ; avec JavaScript, un clic suffit (factures-crud.js).
  */
@@ -20,7 +21,7 @@ $tris = [
     'echeance'     => 'Échéance la plus proche',
 ];
 ?>
-  <main id="main" class="bill-ui">
+  <main id="main" class="bill-ui"<?= $toast !== '' ? ' data-toast="' . e($toast) . '"' : '' ?>>
 <?php require __DIR__ . '/partials/sprite.php'; ?>
     <div class="container">
       <nav class="breadcrumbs" aria-label="Fil d'Ariane">

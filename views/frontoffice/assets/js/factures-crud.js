@@ -472,6 +472,39 @@
   }
   document.addEventListener("DOMContentLoaded", addIcons);
 
+  /* Bulle de succès (« toast ») après un ajout réussi : message reçu de PHP dans <main data-toast>.
+     Placée dans <body> en position fixe : elle ne déplace rien, ne bloque aucun clic (CSS
+     pointer-events: none) et disparaît seule après 3 secondes. Rien n'est écrit en HTML : textContent. */
+  const TOAST_DUREE = 3000;
+  function showSuccessToast() {
+    const holder = document.querySelector("main[data-toast]");
+    const message = holder ? holder.dataset.toast.trim() : "";
+    if (!message) return;
+    const toast = document.createElement("div");
+    toast.className = "bill-toast";
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    const icon = document.createElement("span");
+    icon.className = "bill-toast__icon";
+    icon.setAttribute("aria-hidden", "true");
+    icon.innerHTML = ICONS["circle-check"];   // icône fixe de ce fichier, aucune donnée saisie
+    const text = document.createElement("p");
+    toast.append(icon, text);
+    document.body.appendChild(toast);
+    // Texte posé après l'insertion : la zone aria-live l'annonce aux lecteurs d'écran
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      text.textContent = message;
+      toast.classList.add("is-visible");
+    }));
+    setTimeout(() => {
+      toast.classList.add("is-leaving");
+      // Retirée après le fondu (ou tout de suite si les animations sont réduites)
+      toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+      setTimeout(() => toast.remove(), 600);
+    }, TOAST_DUREE);
+  }
+  document.addEventListener("DOMContentLoaded", showSuccessToast);
+
   // « load » arrive après DOMContentLoaded : ces contrôles s'exécutent APRÈS ceux de validation.js
   window.addEventListener("load", () => {
     document.querySelectorAll("form[data-bill-crud-form]").forEach((form, index) => {

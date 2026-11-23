@@ -591,3 +591,53 @@
 
 /* Bouton dans une carte « constat » (page Détail) */
 .bill-insight .bill-btn { width: 100%; margin-top: 14px; }
+
+/* ---------- Bulle de succès (toast) après un ajout ----------
+   Créée par factures-crud.js dans <body>, donc hors de .bill-ui : couleurs fixes de la charte
+   (bleu marine, contour cyan, vert du succès), lisibles en thème clair comme en sombre.
+   Position fixe sous l'en-tête : ne déplace rien ; pointer-events: none : ne bloque aucun clic. */
+.bill-toast {
+  position: fixed;
+  top: calc(var(--header-height, 80px) + 16px);
+  inset-inline-end: 24px;
+  z-index: 310;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(380px, calc(100vw - 32px));
+  padding: 12px 20px 12px 12px;
+  padding-inline: 12px 20px;
+  border: 1px solid rgba(56, 225, 255, 0.38);
+  border-radius: 18px;
+  background: rgba(6, 27, 48, 0.94);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: 0 16px 36px rgba(0, 25, 55, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  color: #f2f8ff;
+  font: 600 14.5px/1.4 var(--font-primary);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.3s ease, transform 0.4s var(--ease-out, ease);
+}
+.bill-toast.is-visible { opacity: 1; transform: translateY(0); }
+.bill-toast.is-leaving { opacity: 0; transition: opacity 0.4s ease; }
+.bill-toast p { margin: 0; }
+.bill-toast__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(115, 209, 61, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(115, 209, 61, 0.45);
+  color: #8be25a;
+}
+.bill-toast__icon svg { width: 20px; height: 20px; }
+@media (max-width: 680px) {
+  .bill-toast { inset-inline: 16px; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bill-toast, .bill-toast.is-visible { transform: none; transition: opacity 0.2s linear; }
+}

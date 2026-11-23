@@ -2,7 +2,8 @@
 /**
  * Vue : Service « Factures & IA » — Front Office — Module 2 (Hiba).
  * Variables reçues : $user (UserModel, citoyen connecté), $bills (ses factures, FactureController::pourJs()),
- *                    $old (formulaire vide de la fenêtre « Ajouter une facture »).
+ *                    $old (formulaire vide de la fenêtre « Ajouter une facture »),
+ *                    $toast (bulle de succès à afficher, '' sinon : FactureController::prendreToast()).
  *
  * Toutes les factures viennent de la base de données. Elles sont passées au JavaScript
  * (assets/js/services/factures.js) dans l'attribut data-bills, en JSON échappé par e() :
@@ -17,7 +18,7 @@ $errors = [];
 $prenom = $user->getPrenom();
 ?>
   <main id="main" class="bill-ui" data-service="factures" data-prenom="<?= e($prenom) ?>"
-        data-bills="<?= e(json_encode($bills, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>">
+        data-bills="<?= e(json_encode($bills, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"<?= $toast !== '' ? ' data-toast="' . e($toast) . '"' : '' ?>>
 <?php require __DIR__ . '/partials/sprite.php'; ?>
     <div class="container">
       <nav class="breadcrumbs" aria-label="Fil d'Ariane">

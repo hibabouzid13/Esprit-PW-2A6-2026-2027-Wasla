@@ -713,6 +713,31 @@ class FactureController extends Controller
     }
 
     // ==============================================================
+    // NOTIFICATION DE SUCCÈS (bulle « toast » du Module 2)
+    // ==============================================================
+
+    /** Message de la bulle affichée après un ajout réussi. */
+    public const TOAST_AJOUT = 'Facture ajoutée avec succès !';
+
+    /**
+     * Retient un message pour la page suivante (après la redirection). Clé propre au module, et non
+     * AuthController::flash() : le message s'affiche en bulle flottante, pas dans le bandeau commun.
+     * À appeler uniquement quand l'enregistrement a réussi.
+     */
+    public static function annoncer(string $message): void
+    {
+        $_SESSION['m2_toast'] = $message;
+    }
+
+    /** Message à afficher une seule fois ('' s'il n'y en a pas) : il est effacé dès qu'il est lu. */
+    public static function prendreToast(): string
+    {
+        $message = $_SESSION['m2_toast'] ?? '';
+        unset($_SESSION['m2_toast']);
+        return is_string($message) ? $message : '';
+    }
+
+    // ==============================================================
     // LIBELLÉS (affichage)
     // ==============================================================
 

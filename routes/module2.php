@@ -32,6 +32,7 @@ return [
         $factures = (new FactureController())->search(FactureController::scopeFor($user), FactureController::cleanFilters([]));
         $bills = array_map(fn (FactureModel $f) => FactureController::pourJs($f), $factures);
         $old = FactureController::emptyForm();
+        $toast = FactureController::prendreToast();
         require __DIR__ . '/../views/frontoffice/pages/factures/factures-ia.php';
     },
 
@@ -48,7 +49,7 @@ return [
         $user = AuthController::currentUser();
         $errors = (new FactureController())->create($_POST, $user->getIdUtilisateur(), FactureController::scopeFor($user));
         if ($errors === []) {
-            AuthController::flash('success', 'Facture ajoutée.');
+            FactureController::annoncer(FactureController::TOAST_AJOUT);   // bulle affichée sur la page suivante
             echo json_encode(['ok' => true, 'redirect' => url('factures', ['onglet' => 'bills'])], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         } else {
             // 200 + ok:false : erreurs de saisie normales (affichées sous les champs par factures.js)
@@ -70,6 +71,7 @@ return [
         $filters = FactureController::cleanFilters($_GET);
         $factures = $ctrl->search($scope, $filters);
         $summary = $ctrl->summary($scope);
+        $toast = FactureController::prendreToast();
         require __DIR__ . '/../views/frontoffice/pages/factures/mes-factures.php';
     },
 
@@ -82,7 +84,7 @@ return [
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors = (new FactureController())->create($_POST, $user->getIdUtilisateur(), FactureController::scopeFor($user));
             if ($errors === []) {
-                AuthController::flash('success', 'Facture ajoutée.');
+                FactureController::annoncer(FactureController::TOAST_AJOUT);   // bulle affichée sur la page suivante
                 header('Location: ' . url('mes-factures'));
                 exit;
             }
