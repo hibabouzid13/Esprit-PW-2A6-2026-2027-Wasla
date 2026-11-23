@@ -1,0 +1,133 @@
+/* ============================================================
+   WASLA — Module 4 (Assistance) : compléments pour les pages
+   Relais de voisinage et Fournisseurs (rendues par PHP).
+   S'appuie sur tokens.css, components.css et services.css.
+   ============================================================ */
+
+/* Les formulaires d'action (statut, suppression…) s'alignent comme des boutons */
+.svc-actions form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.svc-actions a.svc-icon-btn {
+  text-decoration: none;
+}
+
+.asst-muted {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.asst-muted svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Réponses sous une demande */
+.asst-replies {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.asst-reply {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-muted);
+}
+
+.asst-reply__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  font-size: 12.5px;
+}
+
+.asst-reply__head time {
+  margin: 0 0 0 auto;
+}
+
+.asst-reply__text {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.asst-reply .svc-actions {
+  margin-top: 6px;
+}
+
+/* Formulaire de réponse dépliable */
+.asst-reply-box {
+  margin-top: 12px;
+}
+
+.asst-reply-box > summary {
+  display: inline-flex;
+  list-style: none;
+  cursor: pointer;
+}
+
+.asst-reply-box > summary::-webkit-details-marker {
+  display: none;
+}
+
+.asst-reply-box[open] > summary {
+  margin-bottom: 10px;
+}
+
+.asst-reply-box form {
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+/* Demandes reçues (fournisseur) et suivi « Mes demandes » */
+.asst-request {
+  padding: 14px 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.asst-request:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.asst-request .svc-actions {
+  margin-top: 10px;
+}
+
+.asst-item {
+  cursor: default;
+}
+
+.asst-item .svc-actions {
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+a.summary-card.svc-tile {
+  color: inherit;
+  text-decoration: none;
+}
+
+.svc-post .svc-post__foot {
+  margin-top: 12px;
+}
+
+[data-when-sens][hidden] {
+  display: none !important;
+}

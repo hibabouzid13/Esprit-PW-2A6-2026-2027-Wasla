@@ -30,7 +30,10 @@ function url(string $action, array $params = [], string $anchor = ''): string
 /** Chemin public d'un fichier d'assets. asset('css/tokens.css') → views/frontoffice/assets/css/tokens.css */
 function asset(string $path, string $office = 'frontoffice'): string
 {
-    return 'views/' . $office . '/assets/' . ltrim($path, '/');
+    $public = 'views/' . $office . '/assets/' . ltrim($path, '/');
+    // ?v=<date de modification> : le navigateur recharge le fichier dès qu'il change (pas d'ancien JS/CSS en cache)
+    $file = __DIR__ . '/../' . $public;
+    return is_file($file) ? $public . '?v=' . filemtime($file) : $public;
 }
 
 /** Toutes les actions déclarées dans routes/*.php (chargées par index.php). */

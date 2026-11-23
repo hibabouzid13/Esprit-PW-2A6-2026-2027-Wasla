@@ -40,16 +40,15 @@ $groups = [
             ['admin-entreprises', 'Comptes entreprises'],
         ],
     ],
-    // ── Module 4 — Bechir ──
-    [
+    // ── Module 4 — Bechir ── (pages réservées au super admin : bloc masqué pour STEG et SONEDE)
+    ...(AuthController::hasRole(['admin']) ? [[
         'label' => 'Assistance',
         'icon'  => 'heart-pulse',
         'links' => [
-            ['admin-demandes', "Demandes d'assistance"],
-            ['admin-fournisseurs', 'Comptes fournisseurs'],
-            ['admin-acteurs', 'Bénévoles & propriétaires solaires'],
+            ['admin-demandes', "Demandes d'assistance", ['admin-demande']],
+            ['admin-fournisseurs', 'Comptes fournisseurs', ['admin-fournisseur-form', 'admin-fournisseur-voir']],
         ],
-    ],
+    ]] : []),
 ];
 ?>
     <aside class="admin-sidebar" aria-label="Menu d'administration">

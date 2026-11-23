@@ -375,7 +375,7 @@ CREATE TABLE IF NOT EXISTS demande_assistance (
     id_demande     INT          NOT NULL AUTO_INCREMENT,
     id_utilisateur INT          NOT NULL,
     sens           ENUM('demande','offre') NOT NULL DEFAULT 'demande',
-    categorie      ENUM('eau','recharge','electricite','generateur','hebergement','transport','aines','autre') NOT NULL,
+    categorie      ENUM('eau','recharge','electricite','generateur','hebergement','transport','aines','autre','sante') NOT NULL, -- sante = Priorité santé
     titre          VARCHAR(120) NOT NULL,
     description    TEXT         NOT NULL,
     id_zone        INT          NOT NULL,
@@ -396,6 +396,10 @@ CREATE TABLE IF NOT EXISTS demande_assistance (
     CONSTRAINT fk_demande_fournisseur FOREIGN KEY (id_fournisseur)
         REFERENCES utilisateur (id_utilisateur) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Bases créées avant l'ajout de « sante » (signalements Priorité santé envoyés au Back Office) : mise à niveau idempotente.
+ALTER TABLE demande_assistance
+    MODIFY categorie ENUM('eau','recharge','electricite','generateur','hebergement','transport','aines','autre','sante') NOT NULL;
 
 -- Réponse à une demande (bénévole, fournisseur ou propriétaire solaire). Une seule par personne et par demande.
 CREATE TABLE IF NOT EXISTS reponse (
