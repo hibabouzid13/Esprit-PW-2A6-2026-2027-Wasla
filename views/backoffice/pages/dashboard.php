@@ -1,7 +1,8 @@
 <?php
 /**
  * Vue « Tableau de bord » — Back Office (admin, STEG, SONEDE).
- * Variables reçues : $user, $totalUsers, $countByRole (rôle => nombre), $allUsers (UserModel[]).
+ * Variables reçues : $user, $totalUsers, $countByRole (rôle => nombre),
+ *                    $voitLesComptes (super admin), $allUsers (UserModel[], vide pour STEG et SONEDE).
  * Les indicateurs de consommation / coupures sont des données de démonstration
  * qui seront remplacées par les modules 1 et 2.
  */
@@ -119,7 +120,7 @@ ob_start();
           <article class="admin-card">
             <div class="admin-card__head">
               <h2 class="admin-card__title"><span data-icon="users"></span> Utilisateurs du système</h2>
-<?php if (routeExists('admin-citoyens')): ?>
+<?php if ($voitLesComptes && routeExists('admin-citoyens')): ?>
               <a class="admin-card__link" href="<?= url('admin-citoyens') ?>">Voir tous <span data-icon="arrow-right"></span></a>
 <?php endif; ?>
             </div>
@@ -159,7 +160,8 @@ ob_start();
           </article>
         </section>
 
-        <!-- Tous les comptes (données réelles de la table utilisateur) -->
+<?php if ($voitLesComptes): ?>
+        <!-- Tous les comptes (données réelles de la table utilisateur) : super admin uniquement -->
         <section class="admin-card">
           <div class="admin-card__head">
             <h2 class="admin-card__title"><span data-icon="users"></span> Tous les comptes (<?= count($allUsers) ?>)</h2>
@@ -185,6 +187,7 @@ ob_start();
             </table>
           </div>
         </section>
+<?php endif; ?>
 <?php
 $content     = ob_get_clean();
 $title       = 'Tableau de bord — WASLA Admin';

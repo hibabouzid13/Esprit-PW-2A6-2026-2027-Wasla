@@ -24,6 +24,9 @@ abstract class Controller
 {
     protected PDO $db;
 
+    /** Format d'e-mail : exactement le même motif que EMAIL dans validation.js. */
+    private const EMAIL = '/^(?=[^@]{1,64}@)[A-Za-z0-9!#$%&\'*+\/=?^_`{|}~-]+(\.[A-Za-z0-9!#$%&\'*+\/=?^_`{|}~-]+)*@([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/D';
+
     public function __construct()
     {
         $this->db = Database::getConnexion();
@@ -58,18 +61,27 @@ abstract class Controller
                 }
 
                 $message = match ($name) {
-                    'required' => $value === '' ? 'Ce champ est obligatoire.' : null,
-                    'email'    => filter_var($value, FILTER_VALIDATE_EMAIL) && mb_strlen($value) <= 150
+                    // seulement des espaces (insécables comprises) = vide, comme trim() en JavaScript
+                    'required' => $value === '' || preg_match('/^[\s\x{FEFF}]*\z/u', $value) === 1
+                                  ? 'Ce champ est obligatoire.' : null,
+                    'email'    => preg_match(self::EMAIL, $value) && mb_strlen($value) <= 150
                                   ? null : 'Veuillez saisir une adresse e-mail valide.',
                     'name'     => preg_match("/^[\\p{L}][\\p{L}' -]{1,49}$/u", $value)
                                   ? null : 'Lettres, espaces, apostrophes et tirets uniquement (2 à 50 caractères).',
-                    'phone'    => preg_match('/^(\+216)?[2-9]\d{7}$/', preg_replace('/[\s.-]/', '', $value) ?? '')
+                    'phone'    => preg_match('/^(\+216)?[2-9]\d{7}$/', preg_replace('/[\s.-]/u', '', $value) ?? '')
                                   ? null : 'Numéro tunisien à 8 chiffres attendu (ex. 22 123 456).',
-                    'password' => mb_strlen($value) >= 8 && preg_match('/[A-Za-z]/', $value) && preg_match('/\d/', $value)
-                                  ? null : 'Au moins 8 caractères, dont une lettre et un chiffre.',
+                    'password' => match (true) {
+                        mb_strlen($value) < 8 || !preg_match('/[A-Za-z]/', $value) || !preg_match('/\d/', $value)
+                            => 'Au moins 8 caractères, dont une lettre et un chiffre.',
+                        // password_hash() garde les espaces des bords : on les refuse
+                        preg_match('/^\s|\s\z/u', $raw) === 1
+                            => 'Le mot de passe ne doit pas commencer ni finir par un espace.',
+                        default => null,
+                    },
                     'min'      => mb_strlen($value) >= (int) $param ? null : "Au moins $param caractères.",
                     'max'      => mb_strlen($value) <= (int) $param ? null : "Au plus $param caractères.",
-                    'match'    => $value === trim((string) ($data[$param] ?? '')) ? null : 'Les deux valeurs ne correspondent pas.',
+                    // valeurs brutes : « abc12345 » et « abc12345 » suivi d'une espace ne sont pas identiques
+                    'match'    => $raw === ($data[$param] ?? '') ? null : 'Les deux valeurs ne correspondent pas.',
                     'in'       => in_array($value, explode(',', $param), true) ? null : 'Valeur non autorisée.',
                     'int'      => preg_match('/^-?\d+$/', $value) ? null : 'Nombre entier attendu.',
                     'decimal'  => preg_match('/^-?\d+([.,]\d{1,3})?$/', $value) ? null : 'Nombre attendu (ex. 45,500).',

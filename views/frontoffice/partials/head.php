@@ -15,4 +15,4 @@
 <?php endforeach; ?>
 </head>
 <?php $headUser = AuthController::currentUser(); ?>
-<body data-page="<?= e($currentPage) ?>"<?php if ($headUser): ?> data-user-name="<?= e($headUser->getPrenom()) ?>"<?= AuthController::isBackOffice($headUser) ? ' data-user-admin' : '' ?><?php endif; ?>>
+<body data-page="<?= e($currentPage) ?>"<?php if ($headUser): ?> data-user-name="<?= e($headUser->getPrenom()) ?>"<?= AuthController::isBackOffice($headUser) ? ' data-user-admin' : '' ?> data-services-masques="<?= e(servicesMasques()) ?>"<?php endif; ?>>

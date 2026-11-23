@@ -29,7 +29,9 @@
           <div class="dropdown" id="services-dropdown" hidden>
             <p class="dropdown__label">Services citoyens</p>
             <a href="<?= url('alertes') ?>"><span class="dropdown__icon" data-icon="bell"></span><span class="dropdown__text">Alertes personnalisées<small>Notifications ciblées</small></span></a>
+<?php if (serviceVisible('factures')): ?>
             <a href="<?= url('factures') ?>"><span class="dropdown__icon" data-icon="file-text"></span><span class="dropdown__text">Factures &amp; IA<small>Suivi et analyse</small></span></a>
+<?php endif; ?>
             <a href="<?= url('fournisseurs') ?>"><span class="dropdown__icon" data-icon="wrench"></span><span class="dropdown__text">Fournisseurs<small>Techniciens agréés</small></span></a>
             <a href="<?= url('refuges') ?>"><span class="dropdown__icon" data-icon="home"></span><span class="dropdown__text">Zones refuge<small>Points d'accueil</small></span></a>
             <a href="<?= url('relais') ?>"><span class="dropdown__icon" data-icon="snowflake"></span><span class="dropdown__text">Relais de voisinage<small>Entraide locale</small></span></a>
@@ -68,15 +70,21 @@
         </div>
 <?php if ($authUser = AuthController::currentUser()): ?>
 <?php if (AuthController::isBackOffice($authUser)): ?>
-        <a class="btn btn--primary btn--sm header-login" href="<?= url('dashboard') ?>">
+        <a class="btn btn--primary btn--sm header-login" href="<?= url('dashboard') ?>" aria-label="Administration" title="Administration">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-          Administration
+          <span class="header-login__text">Administration</span>
         </a>
 <?php endif; ?>
-        <a class="btn btn--secondary btn--sm header-login <?= isActive('mon-compte', $currentPage) ?>" href="<?= url('mon-compte') ?>" title="Mon espace">
+        <a class="btn btn--secondary btn--sm header-login <?= isActive('mon-compte', $currentPage) ?>" href="<?= url('mon-compte') ?>" title="Mon espace" aria-label="Mon espace">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <span class="header-user" data-no-i18n><?= e($authUser->getPrenom()) ?></span>
         </a>
+        <form class="header-logout" id="header-logout" method="post" action="<?= url('deconnexion') ?>">
+          <?= csrfField() ?>
+          <button class="icon-btn" type="submit" aria-label="Se déconnecter" title="Se déconnecter">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg>
+          </button>
+        </form>
 <?php else: ?>
         <a class="btn btn--secondary btn--sm header-login" href="<?= url('connexion') ?>">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>

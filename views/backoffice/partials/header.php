@@ -12,7 +12,7 @@
             <span class="admin-icon-btn__badge">3</span>
           </button>
 <?php $adminUser = AuthController::currentUser(); ?>
-          <a class="admin-profile" href="<?= url('mon-compte') ?>" aria-label="Mon compte">
+          <a class="admin-profile" href="<?= url(profilRoute($adminUser) ?? 'mon-compte') ?>" aria-label="Mon compte">
             <span class="admin-avatar"><?= e(initials($adminUser)) ?></span>
             <span class="admin-profile__name"><?= e($adminUser->getPrenom() . ' ' . $adminUser->getNom()) ?><small class="admin-profile__role"><?= e(roleLabel($adminUser->getRole())) ?></small></span>
           </a>
