@@ -43,7 +43,7 @@ $groups = [
         'icon'  => 'home',
         'links' => [
             ['admin-refuges', 'Refuges à valider'],
-            ['admin-entreprises', 'Comptes entreprises'],
+            ['admin-entreprises', 'Comptes entreprises', ['admin-entreprise-form', 'admin-entreprise-voir']],
         ],
     ],
     // ── Module 4 — Bechir ──
