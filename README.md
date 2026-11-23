@@ -164,8 +164,6 @@ Web Technologies Project — 2A6 | 2026–2027
 | Citizen | `citoyen@wasla.tn` | `Citoyen@2026` |
 | Company | `entreprise@wasla.tn` | `Demo@2026` |
 | Supplier | `fournisseur@wasla.tn` | `Demo@2026` |
-| Volunteer | `benevole@wasla.tn` | `Demo@2026` |
-| Solar owner | `solaire@wasla.tn` | `Demo@2026` |
 
 ## Usage
 
