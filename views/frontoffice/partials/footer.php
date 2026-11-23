@@ -49,10 +49,6 @@
       </div>
       <div class="footer-bottom">
         <span>© <span data-year>2026</span> WASLA — Connecter. Anticiper. Protéger.</span>
-        <span class="footer-legal">
-          <span data-icon="leaf"></span>
-          Prototype de démonstration — données illustratives
-        </span>
         <div class="footer-bottom__links">
           <a href="<?= url('a-propos', [], 'mentions') ?>">Mentions légales</a>
           <a href="<?= url('a-propos', [], 'confidentialite') ?>">Confidentialité</a>
